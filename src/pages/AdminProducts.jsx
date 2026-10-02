@@ -1,520 +1,593 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useProducts } from "../context/ProductContext";
 
 function AdminProducts() {
+    const {
+        products,
+        deleteProduct,
+        loading,
+    } = useProducts();
 
-    const { products, deleteProduct } = useProducts();
+    const [searchTerm, setSearchTerm] =
+        useState("");
 
-    const [search, setSearch] = useState("");
-    const [category, setCategory] = useState("All");
-    const [availability, setAvailability] = useState("All");
-    const [deleteId, setDeleteId] = useState(null);
+    const [selectedCategory, setSelectedCategory] =
+        useState("All");
 
+    const [deleteTarget, setDeleteTarget] =
+        useState(null);
 
-    /* ========================================
-       FILTER PRODUCTS
-    ======================================== */
-
-    const filteredProducts = products.filter((product) => {
-
-        const matchesSearch =
-            product.productName
-                .toLowerCase()
-                .includes(search.toLowerCase());
-
-        const matchesCategory =
-            category === "All" ||
-            product.category === category;
-
-        const matchesAvailability =
-            availability === "All" ||
-            product.availability === availability;
-
-        return (
-            matchesSearch &&
-            matchesCategory &&
-            matchesAvailability
-        );
+    const [message, setMessage] = useState({
+        type: "",
+        text: "",
     });
 
+    const categories = [
+        "All",
+        "Smartphones",
+        "Laptops",
+        "Accessories",
+    ];
 
-    /* ========================================
-       DELETE PRODUCT
-    ======================================== */
+    // ========================================
+    // FILTER PRODUCTS
+    // ========================================
 
-    const handleDelete = (id) => {
-        setDeleteId(id);
-    };
+    const filteredProducts = useMemo(() => {
+        const search =
+            searchTerm
+                .trim()
+                .toLowerCase();
 
+        return products.filter(
+            (product) => {
+                const matchesSearch =
+                    !search ||
+                    product.productName
+                        ?.toLowerCase()
+                        .includes(search) ||
+                    product.brand
+                        ?.toLowerCase()
+                        .includes(search) ||
+                    product.model
+                        ?.toLowerCase()
+                        .includes(search);
 
-    const confirmDelete = () => {
+                const matchesCategory =
+                    selectedCategory ===
+                    "All" ||
+                    product.category ===
+                    selectedCategory;
 
-        if (deleteId !== null) {
-            deleteProduct(deleteId);
+                return (
+                    matchesSearch &&
+                    matchesCategory
+                );
+            }
+        );
+    }, [
+        products,
+        searchTerm,
+        selectedCategory,
+    ]);
+
+    // ========================================
+    // STATISTICS
+    // ========================================
+
+    const totalProducts =
+        products.length;
+
+    const availableProducts =
+        products.filter(
+            (product) =>
+                String(
+                    product.availability
+                ).toLowerCase() ===
+                "available"
+        ).length;
+
+    const promotionProducts =
+        products.filter(
+            (product) =>
+                String(
+                    product.promotion
+                ).toLowerCase() ===
+                "active"
+        ).length;
+
+    // ========================================
+    // DELETE PRODUCT
+    // ========================================
+
+    const handleDelete = async () => {
+        if (!deleteTarget) {
+            return;
         }
 
-        setDeleteId(null);
+        try {
+            const result =
+                await deleteProduct(
+                    deleteTarget.id
+                );
+
+            setMessage({
+                type: "success",
+                text:
+                    result.message ||
+                    "Product deleted successfully.",
+            });
+
+            setDeleteTarget(null);
+
+            setTimeout(() => {
+                setMessage({
+                    type: "",
+                    text: "",
+                });
+            }, 3000);
+
+        } catch (error) {
+            console.error(
+                "Delete product error:",
+                error
+            );
+
+            setMessage({
+                type: "error",
+                text:
+                    error.message ||
+                    "Failed to delete product.",
+            });
+
+            setDeleteTarget(null);
+
+            setTimeout(() => {
+                setMessage({
+                    type: "",
+                    text: "",
+                });
+            }, 3000);
+        }
     };
 
+    // ========================================
+    // CLEAR SEARCH
+    // ========================================
 
-    const cancelDelete = () => {
-        setDeleteId(null);
+    const clearSearch = () => {
+        setSearchTerm("");
+        setSelectedCategory("All");
     };
-
 
     return (
-
-        <div className="admin-dashboard">
-
+        <div className="admin-products-page">
 
             {/* ========================================
-                SIDEBAR
+                PAGE HEADER
             ======================================== */}
 
-            <aside className="admin-sidebar">
+            <div className="admin-products-header">
 
-                <div className="admin-brand">
+                <div className="admin-products-heading">
 
-                    <div className="admin-brand-logo">
-                        H
-                    </div>
+                    <p className="admin-eyebrow">
+                        PRODUCT MANAGEMENT
+                    </p>
 
-                    <div>
+                    <h1>
+                        Products
+                    </h1>
 
-                        <h2>
-                            Hena Electronics
-                        </h2>
-
-                        <span>
-                            Admin Panel
-                        </span>
-
-                    </div>
+                    <p>
+                        Manage your Hena Electronics
+                        product catalog.
+                    </p>
 
                 </div>
 
+                <Link
+                    to="/admin/products/add"
+                    className="admin-add-product-btn"
+                >
+                    <span>+</span>
+                    Add Product
+                </Link>
 
-                <nav className="admin-nav">
-
-                    <Link to="/admin">
-                        Dashboard
-                    </Link>
-
-                    <Link
-                        to="/admin/products"
-                        className="active"
-                    >
-                        Products
-                    </Link>
-
-                    <Link to="/admin/promotions">
-                        Promotions
-                    </Link>
-
-                    <Link to="/">
-                        View Website
-                    </Link>
-
-                </nav>
-
-            </aside>
-
-
+            </div>
 
             {/* ========================================
-                MAIN CONTENT
+                MESSAGE
             ======================================== */}
 
-            <main className="admin-main">
-
-
-                {/* ========================================
-                    HEADER
-                ======================================== */}
-
-                <div className="admin-header">
+            {message.text && (
+                <div
+                    className={`admin-message ${message.type}`}
+                >
+                    <div className="admin-message-icon">
+                        {message.type ===
+                            "success"
+                            ? "✓"
+                            : "!"}
+                    </div>
 
                     <div>
-
-                        <p className="admin-label">
-                            PRODUCT MANAGEMENT
-                        </p>
-
-                        <h1>
-                            Products
-                        </h1>
+                        <strong>
+                            {message.type ===
+                                "success"
+                                ? "Success"
+                                : "Error"}
+                        </strong>
 
                         <p>
-                            Manage your Hena Electronics inventory.
+                            {message.text}
                         </p>
+                    </div>
+                </div>
+            )}
 
+            {/* ========================================
+                STATISTICS
+            ======================================== */}
+
+            <div className="admin-products-stats">
+
+                <div className="admin-product-stat-card">
+
+                    <div className="admin-stat-icon">
+                        📦
                     </div>
 
+                    <div>
+                        <span>
+                            Total Products
+                        </span>
 
-                    <Link
-                        to="/admin/products/add"
-                        className="admin-view-button"
-                    >
-                        + Add Product
-                    </Link>
+                        <strong>
+                            {totalProducts}
+                        </strong>
+                    </div>
 
                 </div>
 
+                <div className="admin-product-stat-card">
 
+                    <div className="admin-stat-icon">
+                        ✓
+                    </div>
 
-                {/* ========================================
-                    STATISTICS
-                ======================================== */}
+                    <div>
+                        <span>
+                            Available
+                        </span>
 
-                <div className="admin-stats">
+                        <strong>
+                            {availableProducts}
+                        </strong>
+                    </div>
 
+                </div>
 
-                    {/* TOTAL PRODUCTS */}
+                <div className="admin-product-stat-card">
 
-                    <div className="admin-stat-card">
+                    <div className="admin-stat-icon">
+                        🏷️
+                    </div>
 
-                        <div className="admin-stat-icon">
+                    <div>
+                        <span>
+                            Promotions
+                        </span>
+
+                        <strong>
+                            {promotionProducts}
+                        </strong>
+                    </div>
+
+                </div>
+
+                <div className="admin-product-stat-card">
+
+                    <div className="admin-stat-icon">
+                        🔎
+                    </div>
+
+                    <div>
+                        <span>
+                            Showing
+                        </span>
+
+                        <strong>
+                            {filteredProducts.length}
+                        </strong>
+                    </div>
+
+                </div>
+
+            </div>
+
+            {/* ========================================
+                FILTER TOOLBAR
+            ======================================== */}
+
+            <div className="admin-products-toolbar">
+
+                <div className="admin-search-box">
+
+                    <span className="admin-search-icon">
+                        ⌕
+                    </span>
+
+                    <input
+                        type="text"
+                        placeholder="Search by product, brand or model..."
+                        value={
+                            searchTerm
+                        }
+                        onChange={(
+                            event
+                        ) =>
+                            setSearchTerm(
+                                event
+                                    .target
+                                    .value
+                            )
+                        }
+                    />
+
+                    {searchTerm && (
+                        <button
+                            type="button"
+                            className="admin-clear-search"
+                            onClick={() =>
+                                setSearchTerm(
+                                    ""
+                                )
+                            }
+                        >
+                            ×
+                        </button>
+                    )}
+
+                </div>
+
+                <div className="admin-category-filter">
+
+                    {categories.map(
+                        (category) => (
+                            <button
+                                key={
+                                    category
+                                }
+                                type="button"
+                                className={
+                                    selectedCategory ===
+                                        category
+                                        ? "active"
+                                        : ""
+                                }
+                                onClick={() =>
+                                    setSelectedCategory(
+                                        category
+                                    )
+                                }
+                            >
+                                {
+                                    category
+                                }
+                            </button>
+                        )
+                    )}
+
+                </div>
+
+            </div>
+
+            {/* ========================================
+                RESULT INFORMATION
+            ======================================== */}
+
+            <div className="admin-products-result-bar">
+
+                <div>
+                    <strong>
+                        {filteredProducts.length}
+                    </strong>
+
+                    <span>
+                        {filteredProducts.length ===
+                            1
+                            ? " product"
+                            : " products"}{" "}
+                        found
+                    </span>
+                </div>
+
+                {(searchTerm ||
+                    selectedCategory !==
+                    "All") && (
+                        <button
+                            type="button"
+                            onClick={
+                                clearSearch
+                            }
+                            className="admin-reset-filter"
+                        >
+                            Clear filters
+                        </button>
+                    )}
+
+            </div>
+
+            {/* ========================================
+                PRODUCTS CARD
+            ======================================== */}
+
+            <div className="admin-products-card">
+
+                {/* LOADING */}
+
+                {loading ? (
+                    <div className="admin-products-loading">
+
+                        <div className="admin-loading-spinner">
+                        </div>
+
+                        <h3>
+                            Loading products...
+                        </h3>
+
+                        <p>
+                            Please wait while we
+                            load your product catalog.
+                        </p>
+
+                    </div>
+                ) : filteredProducts.length ===
+                    0 ? (
+
+                    /* EMPTY */
+
+                    <div className="admin-empty-products">
+
+                        <div className="empty-icon">
                             📦
                         </div>
 
-                        <div>
+                        <h3>
+                            No products found
+                        </h3>
 
-                            <span>
-                                Total Products
-                            </span>
+                        <p>
+                            {searchTerm ||
+                                selectedCategory !==
+                                "All"
+                                ? "Try changing your search or category filter."
+                                : "Your product catalog is empty."}
+                        </p>
 
-                            <strong>
-                                {products.length}
-                            </strong>
-
-                        </div>
-
-                    </div>
-
-
-
-                    {/* SMARTPHONES */}
-
-                    <div className="admin-stat-card">
-
-                        <div className="admin-stat-icon">
-                            📱
-                        </div>
-
-                        <div>
-
-                            <span>
-                                Smartphones
-                            </span>
-
-                            <strong>
-                                {
-                                    products.filter(
-                                        (product) =>
-                                            product.category ===
-                                            "Smartphones"
-                                    ).length
+                        {searchTerm ||
+                            selectedCategory !==
+                            "All" ? (
+                            <button
+                                type="button"
+                                onClick={
+                                    clearSearch
                                 }
-                            </strong>
-
-                        </div>
-
-                    </div>
-
-
-
-                    {/* LAPTOPS */}
-
-                    <div className="admin-stat-card">
-
-                        <div className="admin-stat-icon">
-                            💻
-                        </div>
-
-                        <div>
-
-                            <span>
-                                Laptops
-                            </span>
-
-                            <strong>
-                                {
-                                    products.filter(
-                                        (product) =>
-                                            product.category ===
-                                            "Laptops"
-                                    ).length
-                                }
-                            </strong>
-
-                        </div>
-
-                    </div>
-
-
-
-                    {/* ACCESSORIES */}
-
-                    <div className="admin-stat-card">
-
-                        <div className="admin-stat-icon">
-                            🎧
-                        </div>
-
-                        <div>
-
-                            <span>
-                                Accessories
-                            </span>
-
-                            <strong>
-                                {
-                                    products.filter(
-                                        (product) =>
-                                            product.category ===
-                                            "Accessories"
-                                    ).length
-                                }
-                            </strong>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-
-
-                {/* ========================================
-                    PRODUCTS SECTION
-                ======================================== */}
-
-                <section className="admin-section">
-
-
-                    {/* SECTION HEADING */}
-
-                    <div className="admin-section-heading">
-
-                        <div>
-
-                            <p>
-                                INVENTORY
-                            </p>
-
-                            <h2>
-                                All Products
-                            </h2>
-
-                        </div>
-
-                    </div>
-
-
-
-                    {/* ========================================
-                        SEARCH AND FILTERS
-                    ======================================== */}
-
-                    <div className="admin-product-filters">
-
-
-                        {/* SEARCH */}
-
-                        <div className="admin-search">
-
-                            <span>
-                                🔍
-                            </span>
-
-                            <input
-                                type="text"
-                                placeholder="Search products..."
-                                value={search}
-                                onChange={(event) =>
-                                    setSearch(event.target.value)
-                                }
-                            />
-
-                        </div>
-
-
-
-                        {/* CATEGORY */}
-
-                        <select
-                            value={category}
-                            onChange={(event) =>
-                                setCategory(event.target.value)
-                            }
-                        >
-
-                            <option value="All">
-                                All Categories
-                            </option>
-
-                            <option value="Smartphones">
-                                Smartphones
-                            </option>
-
-                            <option value="Laptops">
-                                Laptops
-                            </option>
-
-                            <option value="Accessories">
-                                Accessories
-                            </option>
-
-                        </select>
-
-
-
-                        {/* AVAILABILITY */}
-
-                        <select
-                            value={availability}
-                            onChange={(event) =>
-                                setAvailability(event.target.value)
-                            }
-                        >
-
-                            <option value="All">
-                                All Availability
-                            </option>
-
-                            <option value="available">
-                                Available
-                            </option>
-
-                            <option value="out-of-stock">
-                                Out of Stock
-                            </option>
-
-                        </select>
-
-                    </div>
-
-
-
-                    {/* ========================================
-                        PRODUCTS TABLE
-                    ======================================== */}
-
-                    <div className="admin-products-table">
-
-                        {filteredProducts.length === 0 ? (
-
-                            <div className="admin-empty-products">
-
-                                <div className="admin-empty-icon">
-                                    🔍
-                                </div>
-
-                                <h3>
-                                    No Products Found
-                                </h3>
-
-                                <p>
-                                    Try changing your search or filters.
-                                </p>
-
-                            </div>
-
+                                className="admin-empty-reset"
+                            >
+                                Clear Filters
+                            </button>
                         ) : (
+                            <Link
+                                to="/admin/products/add"
+                                className="admin-empty-add"
+                            >
+                                + Add Your First Product
+                            </Link>
+                        )}
 
-                            <table>
+                    </div>
+                ) : (
 
-                                <thead>
+                    /* TABLE */
 
-                                    <tr>
+                    <div className="admin-products-table-wrapper">
 
-                                        <th>
-                                            Product
-                                        </th>
+                        <table className="admin-products-table">
 
-                                        <th>
-                                            Category
-                                        </th>
+                            <thead>
 
-                                        <th>
-                                            Price
-                                        </th>
+                                <tr>
 
-                                        <th>
-                                            Availability
-                                        </th>
+                                    <th>
+                                        Product
+                                    </th>
 
-                                        <th>
-                                            Promotion
-                                        </th>
+                                    <th>
+                                        Category
+                                    </th>
 
-                                        <th>
-                                            Actions
-                                        </th>
+                                    <th>
+                                        Price
+                                    </th>
 
-                                    </tr>
+                                    <th>
+                                        Availability
+                                    </th>
 
-                                </thead>
+                                    <th>
+                                        Promotion
+                                    </th>
 
+                                    <th>
+                                        Actions
+                                    </th>
 
-                                <tbody>
+                                </tr>
 
-                                    {filteredProducts.map(
-                                        (product) => (
+                            </thead>
 
+                            <tbody>
+
+                                {filteredProducts.map(
+                                    (product) => {
+
+                                        const image =
+                                            product
+                                                .images
+                                                ?.length >
+                                                0
+                                                ? product
+                                                    .images[0]
+                                                : product.image;
+
+                                        const availability =
+                                            String(
+                                                product.availability ||
+                                                ""
+                                            ).toLowerCase();
+
+                                        const promotion =
+                                            String(
+                                                product.promotion ||
+                                                "inactive"
+                                            ).toLowerCase();
+
+                                        return (
                                             <tr
-                                                key={product.id}
+                                                key={
+                                                    product.id
+                                                }
                                             >
 
-
-                                                {/* ========================================
-                                                    PRODUCT
-                                                ======================================== */}
+                                                {/* PRODUCT */}
 
                                                 <td>
 
                                                     <div className="admin-product-info">
 
+                                                        <div className="admin-product-image">
 
-                                                        {/* PRODUCT IMAGE */}
+                                                            {image ? (
+                                                                <img
+                                                                    src={
+                                                                        image
+                                                                    }
+                                                                    alt={
+                                                                        product.productName
+                                                                    }
+                                                                />
+                                                            ) : (
+                                                                <span>
+                                                                    📱
+                                                                </span>
+                                                            )}
 
-                                                        {product.images &&
-                                                            product.images.length > 0 ? (
+                                                        </div>
 
-                                                            <img
-                                                                src={
-                                                                    product.images[0]
-                                                                }
-                                                                alt={
-                                                                    product.productName
-                                                                }
-                                                            />
-
-                                                        ) : product.image ? (
-
-                                                            <img
-                                                                src={
-                                                                    product.image
-                                                                }
-                                                                alt={
-                                                                    product.productName
-                                                                }
-                                                            />
-
-                                                        ) : (
-
-                                                            <div className="admin-product-placeholder">
-                                                                📦
-                                                            </div>
-
-                                                        )}
-
-
-
-                                                        {/* PRODUCT NAME */}
-
-                                                        <div className="admin-product-name">
+                                                        <div className="admin-product-text">
 
                                                             <strong>
                                                                 {
@@ -522,25 +595,14 @@ function AdminProducts() {
                                                                 }
                                                             </strong>
 
+                                                            <small>
+                                                                {product.brand ||
+                                                                    "No brand"}
 
-                                                            {/* IMAGE COUNT */}
-
-                                                            <span className="admin-product-image-count">
-
-                                                                📷{" "}
-
-                                                                {
-                                                                    product.images &&
-                                                                        product.images.length > 0
-
-                                                                        ? `${product.images.length} images`
-
-                                                                        : product.image
-                                                                            ? "1 image"
-                                                                            : "No image"
-                                                                }
-
-                                                            </span>
+                                                                {product.model
+                                                                    ? ` • ${product.model}`
+                                                                    : ""}
+                                                            </small>
 
                                                         </div>
 
@@ -548,121 +610,103 @@ function AdminProducts() {
 
                                                 </td>
 
-
-
-                                                {/* ========================================
-                                                    CATEGORY
-                                                ======================================== */}
+                                                {/* CATEGORY */}
 
                                                 <td>
 
-                                                    {product.category}
+                                                    <span className="admin-category-badge">
+                                                        {
+                                                            product.category
+                                                        }
+                                                    </span>
 
                                                 </td>
 
-
-
-                                                {/* ========================================
-                                                    PRICE
-                                                ======================================== */}
+                                                {/* PRICE */}
 
                                                 <td>
 
-                                                    {
-                                                        Number(
-                                                            product.price
-                                                        ).toLocaleString()
-                                                    }{" "}
-                                                    ETB
+                                                    <strong className="admin-product-price">
+
+                                                        ETB{" "}
+                                                        {Number(
+                                                            product.price ||
+                                                            0
+                                                        ).toLocaleString(
+                                                            "en-US"
+                                                        )}
+
+                                                    </strong>
 
                                                 </td>
 
-
-
-                                                {/* ========================================
-                                                    AVAILABILITY
-                                                ======================================== */}
-
+                                                {/* AVAILABILITY */}
 
                                                 <td>
 
-                                                    {product.availability === "available" ? (
+                                                    <span
+                                                        className={`admin-status ${availability ===
+                                                                "available"
+                                                                ? "available"
+                                                                : "out-of-stock"
+                                                            }`}
+                                                    >
 
-                                                        <span className="admin-availability-badge available">
-                                                            ● Available
+                                                        <span className="admin-status-dot">
                                                         </span>
 
-                                                    ) : (
+                                                        {availability ===
+                                                            "available"
+                                                            ? "Available"
+                                                            : "Out of Stock"}
 
-                                                        <span className="admin-availability-badge unavailable">
-                                                            ● Out of Stock
-                                                        </span>
-
-                                                    )}
+                                                    </span>
 
                                                 </td>
 
-
-                                                {/* ========================================
-                                                    PROMOTION
-                                                ======================================== */}
+                                                {/* PROMOTION */}
 
                                                 <td>
 
-                                                    {product.promotion ===
+                                                    {promotion ===
                                                         "active" ? (
+                                                        <span className="admin-promotion-active">
 
-                                                        <span className="admin-promotion-badge">
-
-                                                            🔥{" "}
-                                                            {
+                                                            🏷️{" "}
+                                                            {Number(
                                                                 product.discount ||
                                                                 0
-                                                            }
+                                                            )}
                                                             % OFF
 
                                                         </span>
-
                                                     ) : (
-
-                                                        <span className="admin-no-promotion">
+                                                        <span className="admin-promotion-inactive">
                                                             No Promotion
                                                         </span>
-
                                                     )}
 
                                                 </td>
 
-
-
-                                                {/* ========================================
-                                                    ACTIONS
-                                                ======================================== */}
+                                                {/* ACTIONS */}
 
                                                 <td>
 
                                                     <div className="admin-product-actions">
 
-
-                                                        {/* EDIT */}
-
                                                         <Link
                                                             to={`/admin/products/edit/${product.id}`}
-                                                            className="admin-edit-button"
+                                                            className="admin-edit-btn"
                                                         >
                                                             Edit
                                                         </Link>
 
-
-
-                                                        {/* DELETE */}
-
                                                         <button
                                                             type="button"
-                                                            className="admin-delete-button"
+                                                            className="admin-delete-btn"
                                                             onClick={() =>
-                                                                handleDelete(
-                                                                    product.id
+                                                                setDeleteTarget(
+                                                                    product
                                                                 )
                                                             }
                                                         >
@@ -674,71 +718,86 @@ function AdminProducts() {
                                                 </td>
 
                                             </tr>
+                                        );
+                                    }
+                                )}
 
-                                        )
-                                    )}
+                            </tbody>
 
-                                </tbody>
-
-                            </table>
-
-                        )}
+                        </table>
 
                     </div>
+                )}
 
-                </section>
-
-            </main>
-
-
+            </div>
 
             {/* ========================================
                 DELETE CONFIRMATION MODAL
             ======================================== */}
 
-            {deleteId !== null && (
+            {deleteTarget && (
+                <div
+                    className="admin-modal-overlay"
+                    onClick={() =>
+                        setDeleteTarget(
+                            null
+                        )
+                    }
+                >
 
-                <div className="product-delete-overlay">
+                    <div
+                        className="admin-confirm-modal"
+                        onClick={(
+                            event
+                        ) =>
+                            event.stopPropagation()
+                        }
+                    >
 
-                    <div className="product-delete-modal">
-
-
-                        <div className="product-delete-icon">
-                            🗑️
+                        <div className="admin-confirm-icon">
+                            !
                         </div>
-
 
                         <h2>
                             Delete Product?
                         </h2>
 
-
                         <p>
-                            Are you sure you want to delete this product?
-                            This action cannot be undone.
+                            Are you sure you want
+                            to delete{" "}
+                            <strong>
+                                {
+                                    deleteTarget.productName
+                                }
+                            </strong>
+                            ?
                         </p>
 
+                        <span className="admin-confirm-warning">
+                            This action cannot be
+                            undone.
+                        </span>
 
-                        <div className="product-delete-actions">
-
-
-                            {/* CANCEL */}
+                        <div className="admin-confirm-actions">
 
                             <button
                                 type="button"
-                                className="product-delete-cancel"
-                                onClick={cancelDelete}
+                                className="admin-confirm-cancel"
+                                onClick={() =>
+                                    setDeleteTarget(
+                                        null
+                                    )
+                                }
                             >
                                 Cancel
                             </button>
 
-
-                            {/* CONFIRM DELETE */}
-
                             <button
                                 type="button"
-                                className="product-delete-confirm"
-                                onClick={confirmDelete}
+                                className="admin-confirm-delete"
+                                onClick={
+                                    handleDelete
+                                }
                             >
                                 Delete Product
                             </button>
@@ -748,7 +807,6 @@ function AdminProducts() {
                     </div>
 
                 </div>
-
             )}
 
         </div>

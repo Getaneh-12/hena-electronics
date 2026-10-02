@@ -1,37 +1,135 @@
 import { Link } from "react-router-dom";
 import { useProducts } from "../context/ProductContext";
 
-
 function Products({
     selectedCategory,
     setSelectedCategory,
 }) {
 
-    const { products } = useProducts();
+    const {
+        products,
+        loading,
+        error,
+    } = useProducts();
 
 
-    const categories = [
-        "All",
-        "Smartphones",
-        "Laptops",
-        "Accessories",
-    ];
-
+    /* ========================================
+       FILTER PRODUCTS
+    ======================================== */
 
     const filteredProducts =
         selectedCategory === "All"
             ? products
             : products.filter(
                 (product) =>
-                    product.category === selectedCategory
+                    product.category ===
+                    selectedCategory
             );
 
 
+    /* ========================================
+       LOADING
+    ======================================== */
+
+    if (loading) {
+
+        return (
+
+            <section
+                className="products"
+                id="products"
+            >
+
+                <div className="section-heading">
+
+                    <p>
+                        OUR PRODUCTS
+                    </p>
+
+                    <h2>
+                        Explore Our Products
+                    </h2>
+
+                </div>
+
+
+                <div className="products-message">
+
+                    <h3>
+                        Loading products...
+                    </h3>
+
+                    <p>
+                        Please wait while we load our
+                        latest products.
+                    </p>
+
+                </div>
+
+            </section>
+
+        );
+
+    }
+
+
+    /* ========================================
+       ERROR
+    ======================================== */
+
+    if (error) {
+
+        return (
+
+            <section
+                className="products"
+                id="products"
+            >
+
+                <div className="section-heading">
+
+                    <p>
+                        OUR PRODUCTS
+                    </p>
+
+                    <h2>
+                        Explore Our Products
+                    </h2>
+
+                </div>
+
+
+                <div className="products-message">
+
+                    <h3>
+                        Unable to load products
+                    </h3>
+
+                    <p>
+                        Please make sure the Hena Electronics
+                        backend is running.
+                    </p>
+
+                </div>
+
+            </section>
+
+        );
+
+    }
+
+
     return (
+
         <section
             className="products"
             id="products"
         >
+
+
+            {/* ========================================
+                SECTION HEADER
+            ======================================== */}
 
             <div className="section-heading">
 
@@ -44,90 +142,132 @@ function Products({
                 </h2>
 
                 <span>
-                    Browse smartphones, laptops and accessories
-                    available at Hena Electronics.
+                    Discover quality electronics
+                    from Hena Electronics.
                 </span>
 
             </div>
 
 
-            {/* CATEGORY FILTER */}
+            {/* ========================================
+                CATEGORY FILTER
+            ======================================== */}
 
-            <div className="product-filter">
+            <div className="product-filters">
 
-                {categories.map(
-                    (category) => (
+                <button
+                    className={
+                        selectedCategory === "All"
+                            ? "active"
+                            : ""
+                    }
+                    onClick={() =>
+                        setSelectedCategory("All")
+                    }
+                >
+                    All
+                </button>
 
-                        <button
-                            key={category}
-                            type="button"
-                            className={
-                                selectedCategory === category
-                                    ? "active"
-                                    : ""
-                            }
-                            onClick={() =>
-                                setSelectedCategory(category)
-                            }
-                        >
 
-                            {category === "All"
-                                ? "All Products"
-                                : category}
+                <button
+                    className={
+                        selectedCategory ===
+                            "Smartphones"
+                            ? "active"
+                            : ""
+                    }
+                    onClick={() =>
+                        setSelectedCategory(
+                            "Smartphones"
+                        )
+                    }
+                >
+                    Smartphones
+                </button>
 
-                        </button>
 
-                    )
-                )}
+                <button
+                    className={
+                        selectedCategory ===
+                            "Laptops"
+                            ? "active"
+                            : ""
+                    }
+                    onClick={() =>
+                        setSelectedCategory(
+                            "Laptops"
+                        )
+                    }
+                >
+                    Laptops
+                </button>
+
+
+                <button
+                    className={
+                        selectedCategory ===
+                            "Accessories"
+                            ? "active"
+                            : ""
+                    }
+                    onClick={() =>
+                        setSelectedCategory(
+                            "Accessories"
+                        )
+                    }
+                >
+                    Accessories
+                </button>
 
             </div>
 
 
-            {/* NO PRODUCTS */}
+            {/* ========================================
+                NO PRODUCTS
+            ======================================== */}
 
             {filteredProducts.length === 0 ? (
 
-                <div className="product-empty">
-
-                    <div className="product-empty-icon">
-                        📦
-                    </div>
+                <div className="products-message">
 
                     <h3>
-                        {selectedCategory === "All"
-                            ? "Products Coming Soon"
-                            : `${selectedCategory} Coming Soon`}
+                        No products found
                     </h3>
 
                     <p>
-                        Our latest products will be displayed here.
-                        Please check our Telegram channel for current
-                        products and offers.
+                        There are currently no products
+                        in this category.
                     </p>
-
-                    <a
-                        href="https://t.me/PCandphone4u"
-                        target="_blank"
-                        rel="noreferrer"
-                        className="product-telegram-button"
-                    >
-                        View Products on Telegram →
-                    </a>
 
                 </div>
 
             ) : (
+
+
+                /* ========================================
+                   PRODUCT GRID
+                ======================================== */
 
                 <div className="products-grid">
 
                     {filteredProducts.map(
                         (product) => {
 
-                            const originalPrice =
-                                Number(
-                                    product.price || 0
-                                );
 
+                            /* ================================
+                               PRODUCT IMAGE
+                            ================================= */
+
+                            const productImage =
+                                product.images &&
+                                    product.images.length > 0
+                                    ? product.images[0]
+                                    : product.image;
+
+
+                            /* ================================
+                               DISCOUNTED PRICE
+                            ================================= */
 
                             const discount =
                                 Number(
@@ -135,48 +275,42 @@ function Products({
                                 );
 
 
-                            const discountedPrice =
-                                originalPrice -
-                                (
-                                    originalPrice *
-                                    discount /
-                                    100
+                            const originalPrice =
+                                Number(
+                                    product.price || 0
                                 );
 
 
-                            const amountSaved =
-                                originalPrice -
-                                discountedPrice;
+                            const discountedPrice =
+                                discount > 0
+                                    ? originalPrice -
+                                    (
+                                        originalPrice *
+                                        discount
+                                    ) /
+                                    100
+                                    : originalPrice;
 
 
                             return (
 
-                                <div
+                                <article
                                     className="product-card"
                                     key={product.id}
                                 >
 
-                                    {/* PRODUCT IMAGE */}
 
-                                    <div className="product-card-image">
+                                    {/* ========================================
+                                        IMAGE
+                                    ======================================== */}
 
-                                        {product.images &&
-                                            product.images.length > 0 ? (
+                                    <div className="product-image">
 
-                                            <img
-                                                src={
-                                                    product.images[0]
-                                                }
-                                                alt={
-                                                    product.productName
-                                                }
-                                            />
-
-                                        ) : product.image ? (
+                                        {productImage ? (
 
                                             <img
                                                 src={
-                                                    product.image
+                                                    productImage
                                                 }
                                                 alt={
                                                     product.productName
@@ -185,22 +319,32 @@ function Products({
 
                                         ) : (
 
-                                            <div className="product-image-placeholder">
-                                                📦
+                                            <div className="product-no-image">
+
+                                                <span>
+                                                    📦
+                                                </span>
+
+                                                <p>
+                                                    No Image
+                                                </p>
+
                                             </div>
 
                                         )}
 
 
-                                        {/* DISCOUNT */}
+                                        {/* PROMOTION BADGE */}
 
                                         {product.promotion ===
-                                            "active" && (
+                                            "active" &&
+                                            discount > 0 && (
 
-                                                <span className="product-discount-badge">
+                                                <span className="product-promotion-badge">
 
-                                                    🔥{" "}
-                                                    {discount}% OFF
+                                                    -
+                                                    {discount}
+                                                    %
 
                                                 </span>
 
@@ -209,30 +353,55 @@ function Products({
                                     </div>
 
 
-                                    {/* PRODUCT INFORMATION */}
+                                    {/* ========================================
+                                        PRODUCT INFORMATION
+                                    ======================================== */}
 
-                                    <div className="product-card-content">
+                                    <div className="product-info">
 
-                                        <p className="product-category">
-                                            {product.category}
-                                        </p>
+
+                                        <span className="product-category">
+
+                                            {
+                                                product.category
+                                            }
+
+                                        </span>
 
 
                                         <h3>
-                                            {product.productName}
+
+                                            {
+                                                product.productName
+                                            }
+
                                         </h3>
+
+
+                                        {product.brand && (
+
+                                            <p className="product-brand">
+
+                                                {
+                                                    product.brand
+                                                }
+
+                                            </p>
+
+                                        )}
 
 
                                         {/* PRICE */}
 
-                                        <div className="product-card-price">
+                                        <div className="product-price">
 
                                             {product.promotion ===
-                                                "active" ? (
+                                                "active" &&
+                                                discount > 0 ? (
 
-                                                <div className="product-card-promotion-price">
+                                                <>
 
-                                                    <span className="product-card-original-price">
+                                                    <span className="product-old-price">
 
                                                         {originalPrice.toLocaleString()}
                                                         {" "}
@@ -241,7 +410,7 @@ function Products({
                                                     </span>
 
 
-                                                    <strong className="product-card-sale-price">
+                                                    <strong>
 
                                                         {discountedPrice.toLocaleString()}
                                                         {" "}
@@ -249,21 +418,11 @@ function Products({
 
                                                     </strong>
 
-
-                                                    <small className="product-card-savings">
-
-                                                        Save{" "}
-                                                        {amountSaved.toLocaleString()}
-                                                        {" "}
-                                                        ETB
-
-                                                    </small>
-
-                                                </div>
+                                                </>
 
                                             ) : (
 
-                                                <strong className="product-card-normal-price">
+                                                <strong>
 
                                                     {originalPrice.toLocaleString()}
                                                     {" "}
@@ -276,18 +435,50 @@ function Products({
                                         </div>
 
 
-                                        {/* DETAILS BUTTON */}
+                                        {/* AVAILABILITY */}
+
+                                        <div className="product-availability">
+
+                                            {product.availability ===
+                                                "available" ? (
+
+                                                <span className="available">
+
+                                                    ● Available
+
+                                                </span>
+
+                                            ) : (
+
+                                                <span className="out-of-stock">
+
+                                                    ● Out of Stock
+
+                                                </span>
+
+                                            )}
+
+                                        </div>
+
+
+                                        {/* VIEW PRODUCT */}
 
                                         <Link
                                             to={`/product/${product.id}`}
-                                            className="product-details-button"
+                                            className="product-view-button"
                                         >
-                                            View Details
+
+                                            View Product
+
+                                            <span>
+                                                →
+                                            </span>
+
                                         </Link>
 
                                     </div>
 
-                                </div>
+                                </article>
 
                             );
 
@@ -299,8 +490,9 @@ function Products({
             )}
 
         </section>
-    );
-}
 
+    );
+
+}
 
 export default Products;

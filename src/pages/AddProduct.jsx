@@ -1,10 +1,9 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { useProducts } from "../context/ProductContext";
+
+const API_URL = "http://localhost:5000/api/products";
 
 function AddProduct() {
-    const { addProduct } = useProducts();
-
     const [formData, setFormData] = useState({
         productName: "",
         category: "",
@@ -16,369 +15,571 @@ function AddProduct() {
         storage: "",
         ram: "",
         discount: "",
-        promotion: "none",
+        promotion: "inactive",
     });
 
     const [imagePreviews, setImagePreviews] = useState([]);
-    const [savedProduct, setSavedProduct] = useState(false);
+    const [saving, setSaving] = useState(false);
 
+    const [message, setMessage] = useState({
+        type: "",
+        text: "",
+    });
 
-    /* ========================================
-       HANDLE FORM INPUT
-    ======================================== */
+    // ========================================
+    // FORM CHANGE
+    // ========================================
 
     const handleChange = (event) => {
-        const { id, value } = event.target;
+        const { name, value } = event.target;
 
-        setFormData({
-            ...formData,
-            [id]: value,
-        });
+        setFormData((previous) => ({
+            ...previous,
+            [name]: value,
+        }));
     };
 
+    // ========================================
+    // IMAGE CHANGE
+    // ========================================
 
-    /* ========================================
-       CONVERT IMAGE TO BASE64
-    ======================================== */
+    const handleImageChange = (event) => {
+        const selectedFiles = Array.from(
+            event.target.files
+        );
 
-    const convertImageToBase64 = (file) => {
-        return new Promise((resolve, reject) => {
-
-            const reader = new FileReader();
-
-            reader.readAsDataURL(file);
-
-            reader.onload = () => {
-                resolve(reader.result);
-            };
-
-            reader.onerror = (error) => {
-                reject(error);
-            };
-
-        });
-    };
-
-
-    /* ========================================
-       HANDLE MULTIPLE IMAGES
-    ======================================== */
-
-    const handleImageChange = async (event) => {
-
-        const files = Array.from(event.target.files);
-
-        if (files.length === 0) {
+        if (selectedFiles.length === 0) {
             return;
         }
 
-        const remainingSlots = 3 - imagePreviews.length;
+        // ========================================
+        // CHECK TOTAL IMAGE COUNT
+        // ========================================
 
-        if (files.length > remainingSlots) {
+        const currentFiles = imagePreviews.map(
+            (preview) => preview.file
+        );
 
-            alert(
-                `You can add only ${remainingSlots} more image${remainingSlots === 1 ? "" : "s"
-                }. Maximum is 3 images.`
-            );
+        const totalImages =
+            currentFiles.length +
+            selectedFiles.length;
+
+        if (totalImages > 3) {
+            setMessage({
+                type: "error",
+                text: `You can upload a maximum of 3 images. You already selected ${currentFiles.length} image${currentFiles.length === 1 ? "" : "s"}.`,
+            });
 
             event.target.value = "";
             return;
         }
 
+        // ========================================
+        // CHECK IMAGE TYPES
+        // ========================================
 
-        try {
+        const allowedTypes = [
+            "image/jpeg",
+            "image/jpg",
+            "image/png",
+            "image/webp",
+        ];
 
-            const convertedImages = await Promise.all(
-
-                files.map(async (file) => {
-
-                    const base64Image =
-                        await convertImageToBase64(file);
-
-                    return {
-                        url: base64Image,
-                        name: file.name,
-                    };
-
-                })
-
+        const invalidFile =
+            selectedFiles.find(
+                (file) =>
+                    !allowedTypes.includes(
+                        file.type
+                    )
             );
 
+        if (invalidFile) {
+            setMessage({
+                type: "error",
+                text: "Only JPG, JPEG, PNG and WEBP images are allowed.",
+            });
 
-            setImagePreviews((currentImages) => [
-                ...currentImages,
-                ...convertedImages,
-            ]);
-
-        } catch (error) {
-
-            console.error(
-                "Error converting image:",
-                error
-            );
-
-            alert(
-                "There was a problem uploading the image."
-            );
-
+            event.target.value = "";
+            return;
         }
+
+        // ========================================
+        // CHECK IMAGE SIZE
+        // ========================================
+
+        const largeFile =
+            selectedFiles.find(
+                (file) =>
+                    file.size >
+                    5 * 1024 * 1024
+            );
+
+        if (largeFile) {
+            setMessage({
+                type: "error",
+                text: "Each image must be smaller than 5MB.",
+            });
+
+            event.target.value = "";
+            return;
+        }
+
+        // ========================================
+        // CREATE PREVIEWS
+        // ========================================
+
+        const newPreviews =
+            selectedFiles.map(
+                (file) => ({
+                    file,
+                    url: URL.createObjectURL(
+                        file
+                    ),
+                })
+            );
+
+        // ========================================
+        // ADD NEW IMAGES
+        // ========================================
+
+        setImagePreviews(
+            (previous) => [
+                ...previous,
+                ...newPreviews,
+            ]
+        );
+
+        setMessage({
+            type: "",
+            text: "",
+        });
 
         event.target.value = "";
     };
 
+    // ========================================
+    // REMOVE IMAGE
+    // ========================================
 
-    /* ========================================
-       REMOVE IMAGE
-    ======================================== */
+    const removeImage = (index) => {
+        setImagePreviews(
+            (previous) => {
+                const imageToRemove =
+                    previous[index];
 
-    const removeImage = (indexToRemove) => {
+                if (
+                    imageToRemove?.url
+                ) {
+                    URL.revokeObjectURL(
+                        imageToRemove.url
+                    );
+                }
 
-        setImagePreviews((currentImages) => {
-
-            return currentImages.filter(
-                (_, index) => index !== indexToRemove
-            );
-
-        });
-
+                return previous.filter(
+                    (_, imageIndex) =>
+                        imageIndex !==
+                        index
+                );
+            }
+        );
     };
 
+    // ========================================
+    // SUBMIT PRODUCT
+    // ========================================
 
-    /* ========================================
-       SAVE PRODUCT
-    ======================================== */
-
-    const handleSubmit = (event) => {
-
+    const handleSubmit = async (event) => {
         event.preventDefault();
 
-        const imageUrls = imagePreviews.map(
-            (image) => image.url
-        );
+        // ========================================
+        // VALIDATE PRODUCT NAME
+        // ========================================
 
+        if (
+            !formData.productName.trim()
+        ) {
+            setMessage({
+                type: "error",
+                text: "Product name is required.",
+            });
 
-        addProduct({
+            window.scrollTo({
+                top: 0,
+                behavior: "smooth",
+            });
 
-            ...formData,
+            return;
+        }
 
-            // First image is the main product image
-            image: imageUrls[0] || "",
+        // ========================================
+        // VALIDATE CATEGORY
+        // ========================================
 
-            // Store all product images
-            images: imageUrls,
+        if (!formData.category) {
+            setMessage({
+                type: "error",
+                text: "Please select a product category.",
+            });
 
+            window.scrollTo({
+                top: 0,
+                behavior: "smooth",
+            });
+
+            return;
+        }
+
+        // ========================================
+        // VALIDATE PRICE
+        // ========================================
+
+        if (
+            !formData.price ||
+            Number(formData.price) <= 0
+        ) {
+            setMessage({
+                type: "error",
+                text: "Please enter a valid product price.",
+            });
+
+            window.scrollTo({
+                top: 0,
+                behavior: "smooth",
+            });
+
+            return;
+        }
+
+        // ========================================
+        // VALIDATE PROMOTION
+        // ========================================
+
+        if (
+            formData.promotion === "active" &&
+            Number(formData.discount) <= 0
+        ) {
+            setMessage({
+                type: "error",
+                text: "Please enter a discount greater than 0% for an active promotion.",
+            });
+
+            window.scrollTo({
+                top: 0,
+                behavior: "smooth",
+            });
+
+            return;
+        }
+
+        // ========================================
+        // VALIDATE IMAGE COUNT
+        // ========================================
+
+        if (imagePreviews.length > 3) {
+            setMessage({
+                type: "error",
+                text: "You can upload a maximum of 3 images.",
+            });
+
+            window.scrollTo({
+                top: 0,
+                behavior: "smooth",
+            });
+
+            return;
+        }
+
+        setSaving(true);
+
+        setMessage({
+            type: "",
+            text: "",
         });
 
+        try {
+            // ========================================
+            // CREATE PRODUCT
+            // ========================================
 
-        console.log(
-            "Product Data:",
-            formData
-        );
+            const productResponse =
+                await fetch(API_URL, {
+                    method: "POST",
 
-        console.log(
-            "Product Images:",
-            imageUrls
-        );
+                    headers: {
+                        "Content-Type":
+                            "application/json",
+                    },
 
+                    body: JSON.stringify({
+                        productName:
+                            formData.productName.trim(),
 
-        setSavedProduct(true);
+                        category:
+                            formData.category,
+
+                        price: Number(
+                            formData.price
+                        ),
+
+                        availability:
+                            formData.availability,
+
+                        description:
+                            formData.description,
+
+                        brand:
+                            formData.brand,
+
+                        model:
+                            formData.model,
+
+                        storage:
+                            formData.storage,
+
+                        ram:
+                            formData.ram,
+
+                        promotion:
+                            formData.promotion ===
+                                "active"
+                                ? "active"
+                                : "inactive",
+
+                        discount:
+                            formData.promotion ===
+                                "active"
+                                ? Number(
+                                    formData.discount
+                                ) || 0
+                                : 0,
+                    }),
+                });
+
+            const productData =
+                await productResponse.json();
+
+            if (
+                !productResponse.ok ||
+                !productData.success
+            ) {
+                throw new Error(
+                    productData.message ||
+                    "Failed to create product."
+                );
+            }
+
+            // ========================================
+            // GET PRODUCT ID
+            // ========================================
+
+            const productId =
+                productData.productId ||
+                productData.data?.productId ||
+                productData.data?.id;
+
+            if (!productId) {
+                throw new Error(
+                    "Product was created, but its ID was not returned."
+                );
+            }
+
+            // ========================================
+            // UPLOAD ALL IMAGES
+            // ========================================
+
+            if (
+                imagePreviews.length > 0
+            ) {
+                const imageFormData =
+                    new FormData();
+
+                imagePreviews.forEach(
+                    (preview) => {
+                        imageFormData.append(
+                            "images",
+                            preview.file
+                        );
+                    }
+                );
+
+                const imageResponse =
+                    await fetch(
+                        `${API_URL}/${productId}/images`,
+                        {
+                            method: "POST",
+                            body: imageFormData,
+                        }
+                    );
+
+                const imageData =
+                    await imageResponse.json();
+
+                if (
+                    !imageResponse.ok ||
+                    !imageData.success
+                ) {
+                    throw new Error(
+                        imageData.message ||
+                        "Product was created, but images could not be uploaded."
+                    );
+                }
+            }
+
+            // ========================================
+            // SUCCESS MESSAGE
+            // ========================================
+
+            setMessage({
+                type: "success",
+                text: "Product and images were added successfully.",
+            });
+
+            // ========================================
+            // RESET FORM
+            // ========================================
+
+            setFormData({
+                productName: "",
+                category: "",
+                price: "",
+                availability:
+                    "available",
+                description: "",
+                brand: "",
+                model: "",
+                storage: "",
+                ram: "",
+                discount: "",
+                promotion:
+                    "inactive",
+            });
+
+            // ========================================
+            // CLEAN UP PREVIEW URLS
+            // ========================================
+
+            imagePreviews.forEach(
+                (preview) => {
+                    if (preview.url) {
+                        URL.revokeObjectURL(
+                            preview.url
+                        );
+                    }
+                }
+            );
+
+            setImagePreviews([]);
+
+            window.scrollTo({
+                top: 0,
+                behavior: "smooth",
+            });
+
+            setTimeout(() => {
+                setMessage({
+                    type: "",
+                    text: "",
+                });
+            }, 3500);
+        } catch (error) {
+            console.error(
+                "Add product error:",
+                error
+            );
+
+            setMessage({
+                type: "error",
+                text:
+                    error.message ||
+                    "Something went wrong while adding the product.",
+            });
+
+            window.scrollTo({
+                top: 0,
+                behavior: "smooth",
+            });
+        } finally {
+            setSaving(false);
+        }
     };
-
-
-    /* ========================================
-       RESET FORM
-    ======================================== */
-
-    const resetForm = () => {
-
-        setSavedProduct(false);
-
-        setFormData({
-
-            productName: "",
-            category: "",
-            price: "",
-            availability: "available",
-            description: "",
-            brand: "",
-            model: "",
-            storage: "",
-            ram: "",
-            discount: "",
-            promotion: "none",
-
-        });
-
-        setImagePreviews([]);
-
-    };
-
 
     return (
-        <div className="admin-dashboard">
-
+        <div className="admin-page">
 
             {/* ========================================
-                SIDEBAR
+                HEADER
             ======================================== */}
 
-            <aside className="admin-sidebar">
+            <div className="add-product-title">
 
-                <div className="admin-brand">
+                <span>
+                    PRODUCTS
+                </span>
 
-                    <div className="admin-brand-logo">
-                        H
+                <h1>
+                    Add New Product
+                </h1>
+
+                <p>
+                    Add a new product to Hena Electronics.
+                </p>
+
+                <Link to="/admin/products">
+                    ← Back to Products
+                </Link>
+
+            </div>
+
+            {/* ========================================
+                NOTIFICATION
+            ======================================== */}
+
+            {message.text && (
+                <div
+                    className={`admin-form-message ${message.type}`}
+                >
+
+                    <div className="admin-form-message-icon">
+                        {message.type ===
+                            "success"
+                            ? "✓"
+                            : "!"}
                     </div>
 
-                    <div>
+                    <div className="admin-form-message-content">
 
-                        <h2>
-                            Hena Electronics
-                        </h2>
+                        <strong>
+                            {message.type ===
+                                "success"
+                                ? "Product Added"
+                                : "Unable to Add Product"}
+                        </strong>
 
                         <span>
-                            Admin Panel
+                            {message.text}
                         </span>
 
                     </div>
 
                 </div>
-
-
-                <nav className="admin-nav">
-
-                    <Link to="/admin">
-                        Dashboard
-                    </Link>
-
-                    <Link to="/admin/products">
-                        Products
-                    </Link>
-
-                    <Link to="/admin/promotions">
-                        Promotions
-                    </Link>
-
-                    <Link to="/">
-                        View Website
-                    </Link>
-
-                </nav>
-
-            </aside>
-
+            )}
 
             {/* ========================================
-                MAIN CONTENT
+                FORM
             ======================================== */}
 
-            <main className="admin-main">
-
-
-                {/* ========================================
-                    HEADER
-                ======================================== */}
-
-                <div className="admin-header">
-
-                    <div>
-
-                        <p className="admin-label">
-                            PRODUCT MANAGEMENT
-                        </p>
-
-                        <h1>
-                            Add Product
-                        </h1>
-
-                        <p>
-                            Add a new product to Hena Electronics.
-                        </p>
-
-                    </div>
-
-
-                    <Link
-                        to="/admin/products"
-                        className="admin-back-button"
-                    >
-                        ← Back to Products
-                    </Link>
-
-                </div>
-
+            <form
+                className="admin-product-form"
+                onSubmit={handleSubmit}
+            >
 
                 {/* ========================================
-                    SUCCESS MESSAGE
+                    BASIC INFORMATION
                 ======================================== */}
 
-                {savedProduct && (
+                <section className="admin-form-section">
 
-                    <div className="product-success-message">
-
-                        <div className="success-icon">
-                            ✓
-                        </div>
-
-
-                        <div className="success-content">
-
-                            <h3>
-                                Product Added Successfully
-                            </h3>
-
-
-                            <p>
-
-                                <strong>
-                                    {formData.productName}
-                                </strong>{" "}
-
-                                has been added successfully.
-
-                            </p>
-
-                        </div>
-
-
-                        <div className="success-actions">
-
-                            <Link
-                                to="/admin/products"
-                                className="success-view-button"
-                            >
-                                View Products
-                            </Link>
-
-
-                            <button
-                                type="button"
-                                className="success-add-button"
-                                onClick={resetForm}
-                            >
-                                Add Another
-                            </button>
-
-                        </div>
-
-                    </div>
-
-                )}
-
-
-                {/* ========================================
-                    PRODUCT FORM
-                ======================================== */}
-
-                <form
-                    className="admin-product-form"
-                    onSubmit={handleSubmit}
-                >
-
-
-                    {/* BASIC INFORMATION */}
-
-                    <div className="admin-form-section">
+                    <div className="admin-form-section-header">
 
                         <h2>
                             Basic Information
@@ -390,43 +591,52 @@ function AddProduct() {
 
                     </div>
 
-
                     <div className="admin-form-grid">
 
+                        {/* PRODUCT NAME */}
 
-                        {/* Product Name */}
+                        <div className="admin-form-group">
 
-                        <div className="form-group">
-
-                            <label htmlFor="productName">
+                            <label>
                                 Product Name
+                                <span className="required">
+                                    *
+                                </span>
                             </label>
 
                             <input
                                 type="text"
-                                id="productName"
-                                value={formData.productName}
-                                onChange={handleChange}
-                                placeholder="e.g. Samsung Galaxy S25"
-                                required
+                                name="productName"
+                                value={
+                                    formData.productName
+                                }
+                                onChange={
+                                    handleChange
+                                }
+                                placeholder="Enter product name"
                             />
 
                         </div>
 
+                        {/* CATEGORY */}
 
-                        {/* Category */}
+                        <div className="admin-form-group">
 
-                        <div className="form-group">
-
-                            <label htmlFor="category">
+                            <label>
                                 Category
+                                <span className="required">
+                                    *
+                                </span>
                             </label>
 
                             <select
-                                id="category"
-                                value={formData.category}
-                                onChange={handleChange}
-                                required
+                                name="category"
+                                value={
+                                    formData.category
+                                }
+                                onChange={
+                                    handleChange
+                                }
                             >
 
                                 <option value="">
@@ -449,47 +659,64 @@ function AddProduct() {
 
                         </div>
 
+                        {/* PRICE */}
 
-                        {/* Price */}
+                        <div className="admin-form-group">
 
-                        <div className="form-group">
-
-                            <label htmlFor="price">
-                                Price (ETB)
+                            <label>
+                                Price
+                                <span className="required">
+                                    *
+                                </span>
                             </label>
 
-                            <input
-                                type="number"
-                                id="price"
-                                value={formData.price}
-                                onChange={handleChange}
-                                placeholder="e.g. 45000"
-                                min="0"
-                                required
-                            />
+                            <div className="admin-price-input">
+
+                                <span>
+                                    ETB
+                                </span>
+
+                                <input
+                                    type="number"
+                                    name="price"
+                                    value={
+                                        formData.price
+                                    }
+                                    onChange={
+                                        handleChange
+                                    }
+                                    placeholder="0.00"
+                                    min="0"
+                                    step="0.01"
+                                />
+
+                            </div>
 
                         </div>
 
+                        {/* AVAILABILITY */}
 
-                        {/* Availability */}
+                        <div className="admin-form-group">
 
-                        <div className="form-group">
-
-                            <label htmlFor="availability">
+                            <label>
                                 Availability
                             </label>
 
                             <select
-                                id="availability"
-                                value={formData.availability}
-                                onChange={handleChange}
+                                name="availability"
+                                value={
+                                    formData.availability
+                                }
+                                onChange={
+                                    handleChange
+                                }
                             >
 
                                 <option value="available">
                                     Available
                                 </option>
 
-                                <option value="out-of-stock">
+                                <option value="out_of_stock">
                                     Out of Stock
                                 </option>
 
@@ -499,339 +726,374 @@ function AddProduct() {
 
                     </div>
 
-
                     {/* DESCRIPTION */}
 
-                    <div className="admin-form-section">
+                    <div className="admin-form-group admin-description-group">
 
-                        <h2>
-                            Product Description
-                        </h2>
-
-                    </div>
-
-
-                    <div className="form-group">
-
-                        <label htmlFor="description">
+                        <label>
                             Description
                         </label>
 
                         <textarea
-                            id="description"
+                            name="description"
+                            value={
+                                formData.description
+                            }
+                            onChange={
+                                handleChange
+                            }
+                            placeholder="Write a short description about the product..."
                             rows="5"
-                            value={formData.description}
-                            onChange={handleChange}
-                            placeholder="Describe the product..."
-                            required
-                        ></textarea>
+                        />
 
                     </div>
 
+                </section>
 
-                    {/* SPECIFICATIONS */}
+                {/* ========================================
+                    PRODUCT DETAILS
+                ======================================== */}
 
-                    <div className="admin-form-section">
+                <section className="admin-form-section">
+
+                    <div className="admin-form-section-header">
 
                         <h2>
-                            Specifications
+                            Product Details
                         </h2>
 
                         <p>
-                            Add important technical specifications.
+                            Add specifications that help customers understand the product.
                         </p>
 
                     </div>
 
-
                     <div className="admin-form-grid">
 
+                        {/* BRAND */}
 
-                        {/* Brand */}
+                        <div className="admin-form-group">
 
-                        <div className="form-group">
-
-                            <label htmlFor="brand">
+                            <label>
                                 Brand
                             </label>
 
                             <input
                                 type="text"
-                                id="brand"
-                                value={formData.brand}
-                                onChange={handleChange}
-                                placeholder="e.g. Samsung"
+                                name="brand"
+                                value={
+                                    formData.brand
+                                }
+                                onChange={
+                                    handleChange
+                                }
+                                placeholder="e.g. Apple"
                             />
 
                         </div>
 
+                        {/* MODEL */}
 
-                        {/* Model */}
+                        <div className="admin-form-group">
 
-                        <div className="form-group">
-
-                            <label htmlFor="model">
+                            <label>
                                 Model
                             </label>
 
                             <input
                                 type="text"
-                                id="model"
-                                value={formData.model}
-                                onChange={handleChange}
-                                placeholder="e.g. Galaxy S25"
+                                name="model"
+                                value={
+                                    formData.model
+                                }
+                                onChange={
+                                    handleChange
+                                }
+                                placeholder="e.g. iPhone 17 Pro"
                             />
 
                         </div>
 
+                        {/* STORAGE */}
 
-                        {/* Storage */}
+                        <div className="admin-form-group">
 
-                        <div className="form-group">
-
-                            <label htmlFor="storage">
+                            <label>
                                 Storage
                             </label>
 
                             <input
                                 type="text"
-                                id="storage"
-                                value={formData.storage}
-                                onChange={handleChange}
+                                name="storage"
+                                value={
+                                    formData.storage
+                                }
+                                onChange={
+                                    handleChange
+                                }
                                 placeholder="e.g. 256GB"
                             />
 
                         </div>
 
-
                         {/* RAM */}
 
-                        <div className="form-group">
+                        <div className="admin-form-group">
 
-                            <label htmlFor="ram">
+                            <label>
                                 RAM
                             </label>
 
                             <input
                                 type="text"
-                                id="ram"
-                                value={formData.ram}
-                                onChange={handleChange}
-                                placeholder="e.g. 12GB"
+                                name="ram"
+                                value={
+                                    formData.ram
+                                }
+                                onChange={
+                                    handleChange
+                                }
+                                placeholder="e.g. 8GB"
                             />
 
                         </div>
 
                     </div>
 
+                </section>
 
-                    {/* PRODUCT IMAGES */}
+                {/* ========================================
+                    PROMOTION
+                ======================================== */}
 
-                    <div className="admin-form-section">
+                <section className="admin-form-section">
 
-                        <h2>
-                            Product Images
-                        </h2>
-
-                        <p>
-                            Images are optional. You can upload up to
-                            3 images: Front, Back and Side view.
-                        </p>
-
-                    </div>
-
-
-                    <div className="product-image-upload">
-
-
-                        {/* IMAGE PREVIEWS */}
-
-                        {imagePreviews.length > 0 ? (
-
-                            <div className="product-multiple-images">
-
-                                {imagePreviews.map(
-                                    (image, index) => (
-
-                                        <div
-                                            className="product-image-item"
-                                            key={`${image.name}-${index}`}
-                                        >
-
-                                            <img
-                                                src={image.url}
-                                                alt={`Product ${index + 1}`}
-                                                className="product-image-preview"
-                                            />
-
-
-                                            <span className="product-image-label">
-
-                                                {index === 0 &&
-                                                    "Front View"}
-
-                                                {index === 1 &&
-                                                    "Back View"}
-
-                                                {index === 2 &&
-                                                    "Side View"}
-
-                                            </span>
-
-
-                                            <button
-                                                type="button"
-                                                className="product-image-remove"
-                                                onClick={() =>
-                                                    removeImage(index)
-                                                }
-                                            >
-                                                Remove
-                                            </button>
-
-                                        </div>
-
-                                    )
-                                )}
-
-                            </div>
-
-                        ) : (
-
-                            <div className="product-upload-icon">
-                                📷
-                            </div>
-
-                        )}
-
-
-                        {/* IMAGE TITLE */}
-
-                        <h3>
-
-                            {imagePreviews.length === 0
-                                ? "Upload Product Images"
-                                : `${imagePreviews.length} Image${imagePreviews.length > 1
-                                    ? "s"
-                                    : ""
-                                } Selected`}
-
-                        </h3>
-
-
-                        <p>
-                            Optional • JPG, PNG or WEBP • Maximum 3 images
-                        </p>
-
-
-                        {/* FILE INPUT */}
-
-                        {imagePreviews.length < 3 && (
-
-                            <input
-                                type="file"
-                                accept="image/png,image/jpeg,image/webp"
-                                multiple
-                                onChange={handleImageChange}
-                            />
-
-                        )}
-
-                    </div>
-
-
-                    {/* PROMOTION */}
-
-                    <div className="admin-form-section">
+                    <div className="admin-form-section-header">
 
                         <h2>
                             Promotion
                         </h2>
 
                         <p>
-                            Add an optional discount or special offer.
+                            Configure promotional pricing for this product.
                         </p>
 
                     </div>
 
-
                     <div className="admin-form-grid">
 
+                        {/* PROMOTION STATUS */}
 
-                        {/* Discount */}
+                        <div className="admin-form-group">
 
-                        <div className="form-group">
-
-                            <label htmlFor="discount">
-                                Discount (%)
-                            </label>
-
-                            <input
-                                type="number"
-                                id="discount"
-                                value={formData.discount}
-                                onChange={handleChange}
-                                placeholder="e.g. 10"
-                                min="0"
-                                max="100"
-                            />
-
-                        </div>
-
-
-                        {/* Promotion Status */}
-
-                        <div className="form-group">
-
-                            <label htmlFor="promotion">
+                            <label>
                                 Promotion Status
                             </label>
 
                             <select
-                                id="promotion"
-                                value={formData.promotion}
-                                onChange={handleChange}
+                                name="promotion"
+                                value={
+                                    formData.promotion
+                                }
+                                onChange={
+                                    handleChange
+                                }
                             >
 
-                                <option value="none">
-                                    No Promotion
+                                <option value="inactive">
+                                    Inactive
                                 </option>
 
                                 <option value="active">
-                                    Active Promotion
+                                    Active
                                 </option>
 
                             </select>
 
                         </div>
 
+                        {/* DISCOUNT */}
+
+                        <div className="admin-form-group">
+
+                            <label>
+                                Discount
+                            </label>
+
+                            <div className="admin-price-input">
+
+                                <span>
+                                    %
+                                </span>
+
+                                <input
+                                    type="number"
+                                    name="discount"
+                                    value={
+                                        formData.discount
+                                    }
+                                    onChange={
+                                        handleChange
+                                    }
+                                    placeholder="0"
+                                    min="0"
+                                    max="100"
+                                    step="1"
+                                />
+
+                            </div>
+
+                        </div>
+
                     </div>
 
+                </section>
 
-                    {/* ACTIONS */}
+                {/* ========================================
+                    PRODUCT IMAGES
+                ======================================== */}
 
-                    <div className="admin-form-actions">
+                <section className="admin-form-section">
 
-                        <Link
-                            to="/admin/products"
-                            className="admin-cancel-button"
-                        >
-                            Cancel
-                        </Link>
+                    <div className="admin-form-section-header">
 
+                        <h2>
+                            Product Images
+                        </h2>
 
-                        <button
-                            type="submit"
-                            className="admin-save-button"
-                        >
-                            Save Product
-                        </button>
+                        <p>
+                            Upload up to 3 images for this product.
+                        </p>
 
                     </div>
 
-                </form>
+                    <div className="admin-image-upload">
 
-            </main>
+                        <label
+                            className="admin-image-upload-box"
+                            htmlFor="product-images"
+                        >
+
+                            <div className="admin-upload-icon">
+                                +
+                            </div>
+
+                            <strong>
+                                Upload Product Images
+                            </strong>
+
+                            <span>
+                                Click here to select images
+                            </span>
+
+                            <small>
+                                JPG, PNG or WEBP • Maximum 5MB each
+                            </small>
+
+                        </label>
+
+                        <input
+                            id="product-images"
+                            type="file"
+                            accept="image/jpeg,image/jpg,image/png,image/webp"
+                            multiple
+                            onChange={
+                                handleImageChange
+                            }
+                        />
+
+                    </div>
+
+                    {/* IMAGE COUNTER */}
+
+                    <div
+                        className="admin-image-counter"
+                        style={{
+                            marginTop: "12px",
+                            fontSize: "14px",
+                            color: "#64748b",
+                        }}
+                    >
+                        {imagePreviews.length}
+                        /3 images selected
+                    </div>
+
+                    {/* IMAGE PREVIEW */}
+
+                    {imagePreviews.length > 0 && (
+                        <div className="admin-image-preview-grid">
+
+                            {imagePreviews.map(
+                                (
+                                    preview,
+                                    index
+                                ) => (
+                                    <div
+                                        className="admin-image-preview"
+                                        key={
+                                            preview.url
+                                        }
+                                    >
+
+                                        <img
+                                            src={
+                                                preview.url
+                                            }
+                                            alt={`Product preview ${index + 1}`}
+                                        />
+
+                                        <span className="admin-image-preview-label">
+                                            Image{" "}
+                                            {index + 1}
+                                        </span>
+
+                                        <button
+                                            type="button"
+                                            className="admin-remove-image"
+                                            onClick={() =>
+                                                removeImage(
+                                                    index
+                                                )
+                                            }
+                                        >
+                                            ×
+                                        </button>
+
+                                    </div>
+                                )
+                            )}
+
+                        </div>
+                    )}
+
+                </section>
+
+                {/* ========================================
+                    ACTION BUTTONS
+                ======================================== */}
+
+                <div className="admin-form-actions">
+
+                    <Link
+                        to="/admin/products"
+                        className="admin-cancel-button"
+                    >
+                        Cancel
+                    </Link>
+
+                    <button
+                        type="submit"
+                        className="admin-save-button"
+                        disabled={saving}
+                    >
+                        {saving
+                            ? "Saving Product..."
+                            : "Save Product"}
+                    </button>
+
+                </div>
+
+            </form>
 
         </div>
     );

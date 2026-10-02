@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAdminAuth } from "../context/AdminAuthContext";
+import henaLogo from "../assets/hena-logo.png";
 
 function AdminLogin() {
 
@@ -16,12 +17,10 @@ function AdminLogin() {
 
         event.preventDefault();
 
-
         const success = login(
             username,
             password
         );
-
 
         if (success) {
 
@@ -42,9 +41,14 @@ function AdminLogin() {
 
             <div className="admin-login-card">
 
+                {/* HENA ELECTRONICS LOGO */}
                 <div className="admin-login-logo">
-                    H
+                    <img
+                        src={henaLogo}
+                        alt="Hena Electronics"
+                    />
                 </div>
+
 
                 <h1>
                     Hena Electronics
@@ -68,7 +72,9 @@ function AdminLogin() {
                             id="username"
                             value={username}
                             onChange={(event) =>
-                                setUsername(event.target.value)
+                                setUsername(
+                                    event.target.value
+                                )
                             }
                             placeholder="Enter username"
                             required
@@ -88,7 +94,9 @@ function AdminLogin() {
                             id="password"
                             value={password}
                             onChange={(event) =>
-                                setPassword(event.target.value)
+                                setPassword(
+                                    event.target.value
+                                )
                             }
                             placeholder="Enter password"
                             required

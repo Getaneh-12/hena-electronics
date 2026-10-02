@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
+import henaLogo from "../assets/hena-logo.png";
 
 function Navbar() {
 
@@ -14,14 +16,16 @@ function Navbar() {
             <div className="navbar-container">
 
                 {/* LOGO */}
-                <a
-                    href="#home"
+                <Link
+                    to="/"
                     className="navbar-logo"
                     onClick={closeMenu}
-                    style={{ color: "blue" }}
                 >
-                    Hena<span>Electronics</span>
-                </a>
+                    <img
+                        src={henaLogo}
+                        alt="Hena Electronics"
+                    />
+                </Link>
 
 
                 {/* DESKTOP NAVIGATION */}

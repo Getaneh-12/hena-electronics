@@ -6,20 +6,53 @@ function ProductDetails() {
 
     const { id } = useParams();
 
-    const { products } = useProducts();
+    const { products, loading } = useProducts();
 
     const product = products.find(
         (item) =>
             String(item.id) === String(id)
     );
 
-    const [selectedImage, setSelectedImage] = useState(0);
+    const [selectedImage, setSelectedImage] =
+        useState(0);
 
 
-    // Product not found
+    /* ========================================
+       LOADING
+    ======================================== */
+
+    if (loading) {
+
+        return (
+            <div className="product-details-page">
+
+                <div className="product-details-container">
+
+                    <div className="product-details-loading">
+
+                        <div className="loading-spinner"></div>
+
+                        <p>
+                            Loading product...
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+        );
+    }
+
+
+    /* ========================================
+       PRODUCT NOT FOUND
+    ======================================== */
+
     if (!product) {
 
         return (
+
             <div className="product-details-page">
 
                 <div className="product-details-container">
@@ -28,8 +61,9 @@ function ProductDetails() {
                         to="/"
                         className="back-button"
                     >
-                        ← Back to Home
+                        ← Back to Products
                     </Link>
+
 
                     <div className="product-not-found">
 
@@ -58,11 +92,15 @@ function ProductDetails() {
                 </div>
 
             </div>
+
         );
     }
 
 
-    // Product images
+    /* ========================================
+       PRODUCT IMAGES
+    ======================================== */
+
     const images =
         product.images &&
             product.images.length > 0
@@ -72,20 +110,29 @@ function ProductDetails() {
                 : [];
 
 
-    // Price calculation
+    /* ========================================
+       PRICE
+    ======================================== */
+
     const originalPrice =
         Number(product.price || 0);
 
     const discount =
         Number(product.discount || 0);
 
+    const hasPromotion =
+        product.promotion === "active" &&
+        discount > 0;
+
     const discountedPrice =
-        originalPrice -
-        (
-            originalPrice *
-            discount /
-            100
-        );
+        hasPromotion
+            ? originalPrice -
+            (
+                originalPrice *
+                discount /
+                100
+            )
+            : originalPrice;
 
     const amountSaved =
         originalPrice -
@@ -96,10 +143,17 @@ function ProductDetails() {
 
         <div className="product-details-page">
 
+
+            {/* ========================================
+                MAIN CONTAINER
+            ======================================== */}
+
             <div className="product-details-container">
 
 
-                {/* BACK BUTTON */}
+                {/* ========================================
+                    BACK
+                ======================================== */}
 
                 <Link
                     to="/"
@@ -109,38 +163,70 @@ function ProductDetails() {
                 </Link>
 
 
+                {/* ========================================
+                    PRODUCT CONTENT
+                ======================================== */}
 
                 <div className="product-details-content">
 
 
-                    {/* ================================
-                        PRODUCT IMAGES
-                    ================================= */}
+                    {/* ========================================
+                        LEFT SIDE - IMAGES
+                    ======================================== */}
 
                     <div className="product-details-images">
 
+
+                        {/* MAIN IMAGE */}
 
                         <div className="product-main-image">
 
                             {images.length > 0 ? (
 
                                 <img
-                                    src={images[selectedImage]}
-                                    alt={product.productName}
+                                    src={
+                                        images[selectedImage]
+                                    }
+                                    alt={
+                                        product.productName
+                                    }
                                 />
 
                             ) : (
 
                                 <div className="product-image-placeholder">
-                                    📦
+
+                                    <span>
+                                        📦
+                                    </span>
+
+                                    <p>
+                                        No image available
+                                    </p>
+
                                 </div>
+
+                            )}
+
+
+                            {/* PROMOTION */}
+
+                            {hasPromotion && (
+
+                                <span className="details-sale-badge">
+
+                                    -
+                                    {discount}
+                                    %
+
+                                </span>
 
                             )}
 
                         </div>
 
 
-                        {/* IMAGE THUMBNAILS */}
+                        {/* THUMBNAILS */}
 
                         {images.length > 1 && (
 
@@ -158,15 +244,15 @@ function ProductDetails() {
                                                     : "product-thumbnail"
                                             }
                                             onClick={() =>
-                                                setSelectedImage(index)
+                                                setSelectedImage(
+                                                    index
+                                                )
                                             }
                                         >
 
                                             <img
                                                 src={image}
-                                                alt={
-                                                    `${product.productName} ${index + 1} `
-                                                }
+                                                alt={`${product.productName} ${index + 1}`}
                                             />
 
                                         </button>
@@ -181,19 +267,20 @@ function ProductDetails() {
                     </div>
 
 
-
-                    {/* ================================
-                        PRODUCT INFORMATION
-                    ================================= */}
+                    {/* ========================================
+                        RIGHT SIDE - INFORMATION
+                    ======================================== */}
 
                     <div className="product-details-info">
 
 
                         {/* CATEGORY */}
 
-                        <p className="product-details-category">
+                        <span className="product-details-category">
+
                             {product.category}
-                        </p>
+
+                        </span>
 
 
                         {/* PRODUCT NAME */}
@@ -203,51 +290,88 @@ function ProductDetails() {
                         </h1>
 
 
+                        {/* BRAND */}
 
-                        {/* PROMOTION */}
+                        {product.brand && (
 
-                        {product.promotion === "active" && (
+                            <p className="product-details-brand">
 
-                            <span className="product-details-discount-badge">
-                                🔥 {discount}% OFF
-                            </span>
+                                Brand:
+                                <strong>
+                                    {" "}
+                                    {product.brand}
+                                </strong>
+
+                            </p>
 
                         )}
 
+
+                        {/* RATING PLACEHOLDER */}
+
+                        <div className="product-details-meta">
+
+                            <span>
+                                ★★★★★
+                            </span>
+
+                            <span>
+                                Premium Electronics
+                            </span>
+
+                        </div>
 
 
                         {/* PRICE */}
 
                         <div className="product-details-price">
 
-                            {product.promotion === "active" ? (
 
-                                <div className="product-promotion-price">
+                            {hasPromotion ? (
 
-                                    <span className="product-original-price">
-                                        {originalPrice.toLocaleString()} ETB
-                                    </span>
+                                <>
 
-                                    <strong className="product-sale-price">
-                                        {discountedPrice.toLocaleString()} ETB
-                                    </strong>
+                                    <div className="product-details-price-row">
 
-                                    <div className="product-savings">
+                                        <strong className="product-sale-price">
 
-                                        Save {amountSaved.toLocaleString()} ETB
+                                            {discountedPrice.toLocaleString()}
+                                            {" "}
+                                            ETB
 
-                                        <span>
-                                            You get {discount}% off
+                                        </strong>
+
+
+                                        <span className="product-original-price">
+
+                                            {originalPrice.toLocaleString()}
+                                            {" "}
+                                            ETB
+
                                         </span>
 
                                     </div>
 
-                                </div>
+
+                                    <div className="product-savings">
+
+                                        Save{" "}
+                                        {amountSaved.toLocaleString()}
+                                        {" "}
+                                        ETB
+
+                                    </div>
+
+                                </>
 
                             ) : (
 
                                 <strong className="product-normal-price">
-                                    {originalPrice.toLocaleString()} ETB
+
+                                    {originalPrice.toLocaleString()}
+                                    {" "}
+                                    ETB
+
                                 </strong>
 
                             )}
@@ -255,27 +379,47 @@ function ProductDetails() {
                         </div>
 
 
-
                         {/* AVAILABILITY */}
 
-                        <div className="product-availability">
+                        <div className="product-details-stock">
 
-                            {product.availability === "available" ? (
+                            {product.availability ===
+                                "available" ? (
 
-                                <span className="available">
-                                    ● In Stock
-                                </span>
+                                <>
+
+                                    <span className="stock-dot available"></span>
+
+                                    <strong>
+                                        In Stock
+                                    </strong>
+
+                                    <span>
+                                        Ready to order
+                                    </span>
+
+                                </>
 
                             ) : (
 
-                                <span className="unavailable">
-                                    ● Out of Stock
-                                </span>
+                                <>
+
+                                    <span className="stock-dot unavailable"></span>
+
+                                    <strong>
+                                        Out of Stock
+                                    </strong>
+
+                                </>
 
                             )}
 
                         </div>
 
+
+                        {/* DIVIDER */}
+
+                        <div className="product-details-divider"></div>
 
 
                         {/* DESCRIPTION */}
@@ -297,115 +441,150 @@ function ProductDetails() {
                         )}
 
 
+                        {/* ========================================
+                            SPECIFICATIONS
+                        ======================================== */}
 
-                        {/* ================================
-                            PRODUCT SPECIFICATIONS
-                        ================================= */}
+                        {(product.brand ||
+                            product.model ||
+                            product.storage ||
+                            product.ram) && (
 
-                        <div className="product-specifications">
+                                <div className="product-specifications">
+
+                                    <h3>
+                                        Specifications
+                                    </h3>
+
+
+                                    <div className="product-spec-grid">
+
+
+                                        {product.brand && (
+
+                                            <div className="product-spec-card">
+
+                                                <span>
+                                                    Brand
+                                                </span>
+
+                                                <strong>
+                                                    {product.brand}
+                                                </strong>
+
+                                            </div>
+
+                                        )}
+
+
+                                        {product.model && (
+
+                                            <div className="product-spec-card">
+
+                                                <span>
+                                                    Model
+                                                </span>
+
+                                                <strong>
+                                                    {product.model}
+                                                </strong>
+
+                                            </div>
+
+                                        )}
+
+
+                                        {product.storage && (
+
+                                            <div className="product-spec-card">
+
+                                                <span>
+                                                    Storage
+                                                </span>
+
+                                                <strong>
+                                                    {product.storage}
+                                                </strong>
+
+                                            </div>
+
+                                        )}
+
+
+                                        {product.ram && (
+
+                                            <div className="product-spec-card">
+
+                                                <span>
+                                                    RAM
+                                                </span>
+
+                                                <strong>
+                                                    {product.ram}
+                                                </strong>
+
+                                            </div>
+
+                                        )}
+
+                                    </div>
+
+                                </div>
+
+                            )}
+
+
+                        {/* ========================================
+                            CONTACT
+                        ======================================== */}
+
+                        <div className="product-contact-section">
 
                             <h3>
-                                Product Information
+                                Interested in this product?
                             </h3>
 
+                            <p>
+                                Contact Hena Electronics
+                                to check availability and
+                                place your order.
+                            </p>
 
-                            {product.brand && (
 
-                                <div className="product-spec-row">
+                            <div className="product-contact-buttons">
 
+                                <a
+                                    href="tel:+251956229470"
+                                    className="product-call-button"
+                                >
                                     <span>
-                                        Brand
+                                        📞
                                     </span>
 
-                                    <strong>
-                                        {product.brand}
-                                    </strong>
+                                    Call Us
+                                    +251990239030
 
-                                </div>
-
-                            )}
+                                </a>
 
 
-                            {product.model && (
-
-                                <div className="product-spec-row">
-
+                                <a
+                                    href="https://t.me/PCandphone4u"
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="product-telegram-button"
+                                >
                                     <span>
-                                        Model
+                                        ✈
                                     </span>
 
-                                    <strong>
-                                        {product.model}
-                                    </strong>
-
-                                </div>
-
-                            )}
+                                    Telegram group
 
 
-                            {product.storage && (
+                                </a>
 
-                                <div className="product-spec-row">
-
-                                    <span>
-                                        Storage
-                                    </span>
-
-                                    <strong>
-                                        {product.storage}
-                                    </strong>
-
-                                </div>
-
-                            )}
-
-
-                            {product.ram && (
-
-                                <div className="product-spec-row">
-
-                                    <span>
-                                        RAM
-                                    </span>
-
-                                    <strong>
-                                        {product.ram}
-                                    </strong>
-
-                                </div>
-
-                            )}
+                            </div>
 
                         </div>
-
-
-
-                        {/* ================================
-                            CONTACT BUTTONS
-                        ================================= */}
-
-                        <div className="product-contact-buttons">
-
-                            <a
-                                href="tel:+251900000000"
-                                className="product-call-button"
-                            >
-                                📞 Call Us
-                                +251956229470
-                            </a>
-
-
-                            <a
-                                href="https://t.me/PCandphone4u"
-                                target="_blank"
-                                rel="noreferrer"
-                                className="product-telegram-button"
-                            >
-                                ✈ Telegram group
-                            </a>
-
-                        </div>
-
 
                     </div>
 
@@ -414,7 +593,9 @@ function ProductDetails() {
             </div>
 
         </div>
+
     );
+
 }
 
 export default ProductDetails;

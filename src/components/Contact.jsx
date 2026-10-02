@@ -316,7 +316,7 @@ function Contact() {
                             className="contact-submit"
                         >
                             <span>
-                                Send Message
+                                Send Message via Telegram
                             </span>
 
                             <span>

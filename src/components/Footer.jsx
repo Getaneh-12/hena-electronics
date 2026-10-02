@@ -1,3 +1,5 @@
+import logo from "../assets/hena-logo.png";
+
 function Footer() {
     return (
         <footer className="footer">
@@ -5,19 +7,26 @@ function Footer() {
             <div className="footer-container">
 
                 {/* Brand */}
-
                 <div className="footer-brand">
 
-                    <div className="footer-logo">
-                        <div className="logo-icon">H</div>
+                    <div className="footer-brand-header">
 
-                        <div>
+                        <div className="footer-logo-wrapper">
+                            <img
+                                src={logo}
+                                alt="Hena Electronics"
+                                className="footer-logo"
+                            />
+                        </div>
+
+                        <div className="footer-brand-text">
                             <h2>Hena Electronics</h2>
 
                             <p>
                                 Mobile • PC • Electronics
                             </p>
                         </div>
+
                     </div>
 
                     <p className="footer-description">
@@ -29,7 +38,6 @@ function Footer() {
 
 
                 {/* Quick Links */}
-
                 <div className="footer-links">
 
                     <h3>Quick Links</h3>
@@ -45,7 +53,6 @@ function Footer() {
 
 
                 {/* Locations */}
-
                 <div className="footer-links">
 
                     <h3>Our Locations</h3>
@@ -53,25 +60,16 @@ function Footer() {
                     <span>📍 4 Kilo</span>
                     <span>📍 Zenebework</span>
 
-                    <a
-                        href="https://t.me/PCandphone4u"
-                        target="_blank"
-                        rel="noreferrer"
-                    >
-                        ✈️ Telegram
-                    </a>
-
                 </div>
 
 
                 {/* Contact */}
-
                 <div className="footer-links">
 
                     <h3>Contact Us</h3>
 
                     <a
-                        href="tel:+251912345678"
+                        href="tel:+251956229470"
                         className="footer-phone"
                     >
                         📞 +251 956229470
@@ -90,6 +88,7 @@ function Footer() {
             </div>
 
 
+            {/* Footer Bottom */}
             <div className="footer-bottom">
 
                 <p>
