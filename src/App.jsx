@@ -17,41 +17,28 @@ import { ProductProvider } from "./context/ProductContext";
 
 import "./App.css";
 
-
 function App() {
-
   return (
-
     <AdminAuthProvider>
-
       <ProductProvider>
-
         <BrowserRouter>
-
           <Routes>
 
-            {/* HOME */}
             <Route
               path="/"
               element={<Home />}
             />
 
-
-            {/* PRODUCT DETAILS */}
             <Route
               path="/product/:id"
               element={<ProductDetails />}
             />
 
-
-            {/* ADMIN LOGIN */}
             <Route
               path="/admin/login"
               element={<AdminLogin />}
             />
 
-
-            {/* ADMIN DASHBOARD */}
             <Route
               path="/admin"
               element={
@@ -61,8 +48,6 @@ function App() {
               }
             />
 
-
-            {/* ADMIN PRODUCTS */}
             <Route
               path="/admin/products"
               element={
@@ -72,8 +57,6 @@ function App() {
               }
             />
 
-
-            {/* ADD PRODUCT */}
             <Route
               path="/admin/products/add"
               element={
@@ -83,8 +66,6 @@ function App() {
               }
             />
 
-
-            {/* EDIT PRODUCT */}
             <Route
               path="/admin/products/edit/:id"
               element={
@@ -94,8 +75,6 @@ function App() {
               }
             />
 
-
-            {/* PROMOTIONS */}
             <Route
               path="/admin/promotions"
               element={
@@ -106,15 +85,10 @@ function App() {
             />
 
           </Routes>
-
         </BrowserRouter>
-
       </ProductProvider>
-
     </AdminAuthProvider>
-
   );
 }
-
 
 export default App;

@@ -30,10 +30,6 @@ function AdminProducts() {
         "Accessories",
     ];
 
-    // ========================================
-    // FILTER PRODUCTS
-    // ========================================
-
     const filteredProducts = useMemo(() => {
         const search =
             searchTerm
@@ -72,10 +68,6 @@ function AdminProducts() {
         selectedCategory,
     ]);
 
-    // ========================================
-    // STATISTICS
-    // ========================================
-
     const totalProducts =
         products.length;
 
@@ -96,10 +88,6 @@ function AdminProducts() {
                 ).toLowerCase() ===
                 "active"
         ).length;
-
-    // ========================================
-    // DELETE PRODUCT
-    // ========================================
 
     const handleDelete = async () => {
         if (!deleteTarget) {
@@ -152,10 +140,6 @@ function AdminProducts() {
         }
     };
 
-    // ========================================
-    // CLEAR SEARCH
-    // ========================================
-
     const clearSearch = () => {
         setSearchTerm("");
         setSelectedCategory("All");
@@ -163,10 +147,6 @@ function AdminProducts() {
 
     return (
         <div className="admin-products-page">
-
-            {/* ========================================
-                PAGE HEADER
-            ======================================== */}
 
             <div className="admin-products-header">
 
@@ -197,13 +177,9 @@ function AdminProducts() {
 
             </div>
 
-            {/* ========================================
-                MESSAGE
-            ======================================== */}
-
             {message.text && (
                 <div
-                    className={`admin-message ${message.type}`}
+                    className={`admin - message ${message.type} `}
                 >
                     <div className="admin-message-icon">
                         {message.type ===
@@ -226,10 +202,6 @@ function AdminProducts() {
                     </div>
                 </div>
             )}
-
-            {/* ========================================
-                STATISTICS
-            ======================================== */}
 
             <div className="admin-products-stats">
 
@@ -307,10 +279,6 @@ function AdminProducts() {
 
             </div>
 
-            {/* ========================================
-                FILTER TOOLBAR
-            ======================================== */}
-
             <div className="admin-products-toolbar">
 
                 <div className="admin-search-box">
@@ -384,10 +352,6 @@ function AdminProducts() {
 
             </div>
 
-            {/* ========================================
-                RESULT INFORMATION
-            ======================================== */}
-
             <div className="admin-products-result-bar">
 
                 <div>
@@ -420,13 +384,7 @@ function AdminProducts() {
 
             </div>
 
-            {/* ========================================
-                PRODUCTS CARD
-            ======================================== */}
-
             <div className="admin-products-card">
-
-                {/* LOADING */}
 
                 {loading ? (
                     <div className="admin-products-loading">
@@ -446,8 +404,6 @@ function AdminProducts() {
                     </div>
                 ) : filteredProducts.length ===
                     0 ? (
-
-                    /* EMPTY */
 
                     <div className="admin-empty-products">
 
@@ -490,8 +446,6 @@ function AdminProducts() {
 
                     </div>
                 ) : (
-
-                    /* TABLE */
 
                     <div className="admin-products-table-wrapper">
 
@@ -562,8 +516,6 @@ function AdminProducts() {
                                                 }
                                             >
 
-                                                {/* PRODUCT */}
-
                                                 <td>
 
                                                     <div className="admin-product-info">
@@ -600,7 +552,7 @@ function AdminProducts() {
                                                                     "No brand"}
 
                                                                 {product.model
-                                                                    ? ` • ${product.model}`
+                                                                    ? ` • ${product.model} `
                                                                     : ""}
                                                             </small>
 
@@ -609,8 +561,6 @@ function AdminProducts() {
                                                     </div>
 
                                                 </td>
-
-                                                {/* CATEGORY */}
 
                                                 <td>
 
@@ -621,8 +571,6 @@ function AdminProducts() {
                                                     </span>
 
                                                 </td>
-
-                                                {/* PRICE */}
 
                                                 <td>
 
@@ -640,16 +588,14 @@ function AdminProducts() {
 
                                                 </td>
 
-                                                {/* AVAILABILITY */}
-
                                                 <td>
 
                                                     <span
-                                                        className={`admin-status ${availability ===
-                                                                "available"
-                                                                ? "available"
-                                                                : "out-of-stock"
-                                                            }`}
+                                                        className={`admin - status ${availability ===
+                                                            "available"
+                                                            ? "available"
+                                                            : "out-of-stock"
+                                                            } `}
                                                     >
 
                                                         <span className="admin-status-dot">
@@ -663,8 +609,6 @@ function AdminProducts() {
                                                     </span>
 
                                                 </td>
-
-                                                {/* PROMOTION */}
 
                                                 <td>
 
@@ -687,8 +631,6 @@ function AdminProducts() {
                                                     )}
 
                                                 </td>
-
-                                                {/* ACTIONS */}
 
                                                 <td>
 
@@ -730,10 +672,6 @@ function AdminProducts() {
                 )}
 
             </div>
-
-            {/* ========================================
-                DELETE CONFIRMATION MODAL
-            ======================================== */}
 
             {deleteTarget && (
                 <div

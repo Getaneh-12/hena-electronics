@@ -1,14 +1,8 @@
 const db = require("../config/db");
+const fs = require("fs");
+const path = require("path");
 
-// ========================================
-// GET ALL PRODUCTS
-// ========================================
-
-const getProducts = (
-    req,
-    res
-) => {
-
+const getProducts = (req, res) => {
     const productSql = `
         SELECT *
         FROM products
@@ -18,9 +12,7 @@ const getProducts = (
     db.query(
         productSql,
         (error, products) => {
-
             if (error) {
-
                 console.error(
                     "Get products error:",
                     error
@@ -30,19 +22,23 @@ const getProducts = (
                     success: false,
                     message:
                         "Failed to fetch products",
-                    error: error.message,
+                    error:
+                        error.message,
                 });
             }
 
-            if (
-                products.length === 0
-            ) {
-
+            if (products.length === 0) {
                 return res.json({
                     success: true,
                     products: [],
                 });
             }
+
+            const productIds =
+                products.map(
+                    (product) =>
+                        product.id
+                );
 
             const imageSql = `
                 SELECT
@@ -50,20 +46,20 @@ const getProducts = (
                     product_id,
                     image_url
                 FROM product_images
+                WHERE product_id IN (?)
                 ORDER BY id ASC
             `;
 
             db.query(
                 imageSql,
+                [productIds],
                 (
                     imageError,
                     images
                 ) => {
-
                     if (imageError) {
-
                         console.error(
-                            "Get images error:",
+                            "Get product images error:",
                             imageError
                         );
 
@@ -79,37 +75,56 @@ const getProducts = (
                     const productsWithImages =
                         products.map(
                             (product) => {
-
                                 const productImages =
-                                    images
-                                        .filter(
-                                            (image) =>
-                                                Number(
-                                                    image.product_id
-                                                ) ===
-                                                Number(
-                                                    product.id
-                                                )
-                                        )
-                                        .map(
-                                            (image) =>
-                                                image.image_url
-                                        );
+                                    images.filter(
+                                        (
+                                            image
+                                        ) =>
+                                            Number(
+                                                image.product_id
+                                            ) ===
+                                            Number(
+                                                product.id
+                                            )
+                                    );
 
                                 return {
                                     ...product,
-
                                     images:
-                                        productImages,
-
+                                        productImages.map(
+                                            (
+                                                image
+                                            ) =>
+                                                image.image_url
+                                        ),
+                                    imageDetails:
+                                        productImages.map(
+                                            (
+                                                image
+                                            ) => ({
+                                                id:
+                                                    Number(
+                                                        image.id
+                                                    ),
+                                                product_id:
+                                                    Number(
+                                                        image.product_id
+                                                    ),
+                                                image_url:
+                                                    image.image_url,
+                                            })
+                                        ),
                                     image:
-                                        productImages[0] ||
-                                        "",
+                                        productImages.length >
+                                        0
+                                            ? productImages[0]
+                                                .image_url
+                                            : null,
                                 };
                             }
                         );
 
-                    res.json({
+                    return res.json({
                         success: true,
                         products:
                             productsWithImages,
@@ -120,16 +135,10 @@ const getProducts = (
     );
 };
 
-
-// ========================================
-// GET ONE PRODUCT
-// ========================================
-
 const getProductById = (
     req,
     res
 ) => {
-
     const { id } =
         req.params;
 
@@ -144,11 +153,9 @@ const getProductById = (
         [id],
         (
             error,
-            results
+            products
         ) => {
-
             if (error) {
-
                 console.error(
                     "Get product error:",
                     error
@@ -158,14 +165,15 @@ const getProductById = (
                     success: false,
                     message:
                         "Failed to fetch product",
-                    error: error.message,
+                    error:
+                        error.message,
                 });
             }
 
             if (
-                results.length === 0
+                products.length ===
+                0
             ) {
-
                 return res.status(404).json({
                     success: false,
                     message:
@@ -174,7 +182,7 @@ const getProductById = (
             }
 
             const product =
-                results[0];
+                products[0];
 
             const imageSql = `
                 SELECT
@@ -193,11 +201,7 @@ const getProductById = (
                     imageError,
                     images
                 ) => {
-
-                    if (
-                        imageError
-                    ) {
-
+                    if (imageError) {
                         console.error(
                             "Get product images error:",
                             imageError
@@ -212,23 +216,41 @@ const getProductById = (
                         });
                     }
 
-                    const imageUrls =
-                        images.map(
-                            (image) =>
-                                image.image_url
-                        );
-
-                    product.images =
-                        imageUrls;
-
-                    product.image =
-                        imageUrls[0] ||
-                        "";
-
-                    res.json({
+                    return res.json({
                         success: true,
-                        product:
-                            product,
+                        product: {
+                            ...product,
+                            images:
+                                images.map(
+                                    (
+                                        image
+                                    ) =>
+                                        image.image_url
+                                ),
+                            imageDetails:
+                                images.map(
+                                    (
+                                        image
+                                    ) => ({
+                                        id:
+                                            Number(
+                                                image.id
+                                            ),
+                                        product_id:
+                                            Number(
+                                                image.product_id
+                                            ),
+                                        image_url:
+                                            image.image_url,
+                                    })
+                                ),
+                            image:
+                                images.length >
+                                0
+                                    ? images[0]
+                                        .image_url
+                                    : null,
+                        },
                     });
                 }
             );
@@ -236,70 +258,29 @@ const getProductById = (
     );
 };
 
-
-// ========================================
-// CREATE PRODUCT
-// ========================================
-
 const createProduct = (
     req,
     res
 ) => {
-
-    console.log(
-        "================================="
-    );
-
-    console.log(
-        "CREATE PRODUCT REQUEST BODY:"
-    );
-
-    console.log(
-        req.body
-    );
-
-    console.log(
-        "================================="
-    );
-
     const {
         productName,
         category,
         price,
+        availability,
+        description,
         brand,
         model,
         storage,
         ram,
-        description,
-        availability,
-        promotion,
         discount,
+        promotion,
     } = req.body;
-
-
-    // ========================================
-    // VALIDATION
-    // ========================================
 
     if (
         !productName ||
-        !productName.trim() ||
         !category ||
-        price === undefined ||
-        price === null ||
-        price === ""
+        price === undefined
     ) {
-
-        console.log(
-            "CREATE PRODUCT VALIDATION FAILED"
-        );
-
-        console.log({
-            productName,
-            category,
-            price,
-        });
-
         return res.status(400).json({
             success: false,
             message:
@@ -307,66 +288,39 @@ const createProduct = (
         });
     }
 
-
-    // ========================================
-    // INSERT PRODUCT
-    // ========================================
-
     const sql = `
-        INSERT INTO products (
-            productName,
+        INSERT INTO products
+        (
+            product_name,
             category,
             price,
+            availability,
+            description,
             brand,
             model,
             storage,
             ram,
-            description,
-            availability,
-            promotion,
-            discount
+            discount,
+            promotion
         )
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
-
     const values = [
-        productName.trim(),
-
+        productName,
         category,
-
-        Number(price),
-
-        brand || "",
-
-        model || "",
-
-        storage || "",
-
-        ram || "",
-
-        description || "",
-
+        price,
         availability ||
-            "available",
-
+            "Available",
+        description || "",
+        brand || "",
+        model || "",
+        storage || "",
+        ram || "",
+        discount || 0,
         promotion ||
             "inactive",
-
-        Number(
-            discount || 0
-        ),
     ];
-
-
-    console.log(
-        "INSERTING PRODUCT:"
-    );
-
-    console.log(
-        values
-    );
-
 
     db.query(
         sql,
@@ -375,11 +329,9 @@ const createProduct = (
             error,
             result
         ) => {
-
             if (error) {
-
                 console.error(
-                    "Create product database error:",
+                    "Create product error:",
                     error
                 );
 
@@ -392,22 +344,10 @@ const createProduct = (
                 });
             }
 
-
-            console.log(
-                "Product created successfully."
-            );
-
-            console.log(
-                "Product ID:",
-                result.insertId
-            );
-
-
-            res.status(201).json({
+            return res.status(201).json({
                 success: true,
                 message:
                     "Product created successfully",
-
                 productId:
                     result.insertId,
             });
@@ -415,25 +355,17 @@ const createProduct = (
     );
 };
 
-
-// ========================================
-// UPLOAD PRODUCT IMAGES
-// ========================================
-
 const uploadProductImages = (
     req,
     res
 ) => {
-
     const { id } =
         req.params;
-
 
     if (
         !req.files ||
         req.files.length === 0
     ) {
-
         return res.status(400).json({
             success: false,
             message:
@@ -441,30 +373,20 @@ const uploadProductImages = (
         });
     }
 
-
-    // ========================================
-    // CHECK PRODUCT
-    // ========================================
-
-    const checkSql = `
+    const checkProductSql = `
         SELECT id
         FROM products
         WHERE id = ?
     `;
 
-
     db.query(
-        checkSql,
+        checkProductSql,
         [id],
         (
             productError,
             products
         ) => {
-
-            if (
-                productError
-            ) {
-
+            if (productError) {
                 console.error(
                     "Check product error:",
                     productError
@@ -479,11 +401,10 @@ const uploadProductImages = (
                 });
             }
 
-
             if (
-                products.length === 0
+                products.length ===
+                0
             ) {
-
                 return res.status(404).json({
                     success: false,
                     message:
@@ -491,12 +412,7 @@ const uploadProductImages = (
                 });
             }
 
-
-            // ========================================
-            // PREPARE IMAGE VALUES
-            // ========================================
-
-            const values =
+            const imageValues =
                 req.files.map(
                     (file) => [
                         id,
@@ -504,30 +420,22 @@ const uploadProductImages = (
                     ]
                 );
 
-
             const imageSql = `
-                INSERT INTO product_images (
+                INSERT INTO product_images
+                (
                     product_id,
                     image_url
                 )
                 VALUES ?
             `;
 
-
             db.query(
                 imageSql,
-                [values],
-                (
-                    imageError,
-                    result
-                ) => {
-
-                    if (
-                        imageError
-                    ) {
-
+                [imageValues],
+                (imageError) => {
+                    if (imageError) {
                         console.error(
-                            "Save images error:",
+                            "Upload product images error:",
                             imageError
                         );
 
@@ -540,28 +448,10 @@ const uploadProductImages = (
                         });
                     }
 
-
-                    const imageUrls =
-                        req.files.map(
-                            (file) =>
-                                `/uploads/products/${file.filename}`
-                        );
-
-
-                    res.status(
-                        201
-                    ).json({
-
+                    return res.json({
                         success: true,
-
                         message:
                             "Product images uploaded successfully",
-
-                        imageCount:
-                            result.affectedRows,
-
-                        images:
-                            imageUrls,
                     });
                 }
             );
@@ -569,16 +459,158 @@ const uploadProductImages = (
     );
 };
 
+const deleteProductImage = (
+    req,
+    res
+) => {
+    const {
+        id,
+        imageId,
+    } = req.params;
 
-// ========================================
-// UPDATE PRODUCT
-// ========================================
+    const findImageSql = `
+        SELECT
+            id,
+            product_id,
+            image_url
+        FROM product_images
+        WHERE id = ?
+        AND product_id = ?
+    `;
+
+    db.query(
+        findImageSql,
+        [
+            imageId,
+            id,
+        ],
+        (
+            error,
+            results
+        ) => {
+            if (error) {
+                console.error(
+                    "Find product image error:",
+                    error
+                );
+
+                return res.status(500).json({
+                    success: false,
+                    message:
+                        "Failed to find product image",
+                    error:
+                        error.message,
+                });
+            }
+
+            if (
+                results.length ===
+                0
+            ) {
+                return res.status(404).json({
+                    success: false,
+                    message:
+                        "Product image not found",
+                });
+            }
+
+            const image =
+                results[0];
+
+            const deleteSql = `
+                DELETE FROM product_images
+                WHERE id = ?
+                AND product_id = ?
+            `;
+
+            db.query(
+                deleteSql,
+                [
+                    imageId,
+                    id,
+                ],
+                (
+                    deleteError,
+                    deleteResult
+                ) => {
+                    if (
+                        deleteError
+                    ) {
+                        console.error(
+                            "Delete product image error:",
+                            deleteError
+                        );
+
+                        return res.status(500).json({
+                            success: false,
+                            message:
+                                "Failed to delete product image",
+                            error:
+                                deleteError.message,
+                        });
+                    }
+
+                    if (
+                        deleteResult.affectedRows ===
+                        0
+                    ) {
+                        return res.status(404).json({
+                            success: false,
+                            message:
+                                "Product image not found",
+                        });
+                    }
+
+                    const relativePath =
+                        image.image_url.replace(
+                            /^\/+/,
+                            ""
+                        );
+
+                    const filePath =
+                        path.join(
+                            __dirname,
+                            "..",
+                            relativePath
+                        );
+
+                    fs.unlink(
+                        filePath,
+                        (
+                            fileError
+                        ) => {
+                            if (
+                                fileError &&
+                                fileError.code !==
+                                    "ENOENT"
+                            ) {
+                                console.error(
+                                    "Delete image file error:",
+                                    fileError
+                                );
+                            }
+
+                            return res.json({
+                                success: true,
+                                message:
+                                    "Product image deleted successfully",
+                                deletedImageId:
+                                    Number(
+                                        imageId
+                                    ),
+                            });
+                        }
+                    );
+                }
+            );
+        }
+    );
+};
 
 const updateProduct = (
     req,
     res
 ) => {
-
     const { id } =
         req.params;
 
@@ -586,87 +618,48 @@ const updateProduct = (
         productName,
         category,
         price,
+        availability,
+        description,
         brand,
         model,
         storage,
         ram,
-        description,
-        availability,
-        promotion,
         discount,
+        promotion,
     } = req.body;
-
-
-    // ========================================
-    // VALIDATION
-    // ========================================
-
-    if (
-        !productName ||
-        !productName.trim() ||
-        !category ||
-        price === undefined ||
-        price === null ||
-        price === ""
-    ) {
-
-        return res.status(400).json({
-            success: false,
-            message:
-                "Product name, category and price are required",
-        });
-    }
-
 
     const sql = `
         UPDATE products
         SET
-            productName = ?,
+            product_name = ?,
             category = ?,
             price = ?,
+            availability = ?,
+            description = ?,
             brand = ?,
             model = ?,
             storage = ?,
             ram = ?,
-            description = ?,
-            availability = ?,
-            promotion = ?,
-            discount = ?
+            discount = ?,
+            promotion = ?
         WHERE id = ?
     `;
 
-
     const values = [
-
-        productName.trim(),
-
+        productName,
         category,
-
-        Number(price),
-
-        brand || "",
-
-        model || "",
-
-        storage || "",
-
-        ram || "",
-
-        description || "",
-
-        availability ||
-            "available",
-
+        price,
+        availability,
+        description,
+        brand,
+        model,
+        storage,
+        ram,
+        discount || 0,
         promotion ||
             "inactive",
-
-        Number(
-            discount || 0
-        ),
-
         id,
     ];
-
 
     db.query(
         sql,
@@ -675,9 +668,7 @@ const updateProduct = (
             error,
             result
         ) => {
-
             if (error) {
-
                 console.error(
                     "Update product error:",
                     error
@@ -692,12 +683,10 @@ const updateProduct = (
                 });
             }
 
-
             if (
                 result.affectedRows ===
                 0
             ) {
-
                 return res.status(404).json({
                     success: false,
                     message:
@@ -705,8 +694,7 @@ const updateProduct = (
                 });
             }
 
-
-            res.json({
+            return res.json({
                 success: true,
                 message:
                     "Product updated successfully",
@@ -715,90 +703,120 @@ const updateProduct = (
     );
 };
 
-
-// ========================================
-// DELETE PRODUCT
-// ========================================
-
 const deleteProduct = (
     req,
     res
 ) => {
-
     const { id } =
         req.params;
 
-
-    const sql = `
-        DELETE FROM products
-        WHERE id = ?
+    const imageSql = `
+        SELECT image_url
+        FROM product_images
+        WHERE product_id = ?
     `;
 
-
     db.query(
-        sql,
+        imageSql,
         [id],
         (
-            error,
-            result
+            imageError,
+            images
         ) => {
-
-            if (error) {
-
+            if (imageError) {
                 console.error(
-                    "Delete product error:",
-                    error
+                    "Get product images before delete error:",
+                    imageError
                 );
 
                 return res.status(500).json({
                     success: false,
                     message:
-                        "Failed to delete product",
+                        "Failed to prepare product deletion",
                     error:
-                        error.message,
+                        imageError.message,
                 });
             }
 
+            const deleteSql = `
+                DELETE FROM products
+                WHERE id = ?
+            `;
 
-            if (
-                result.affectedRows ===
-                0
-            ) {
+            db.query(
+                deleteSql,
+                [id],
+                (
+                    deleteError,
+                    result
+                ) => {
+                    if (
+                        deleteError
+                    ) {
+                        console.error(
+                            "Delete product error:",
+                            deleteError
+                        );
 
-                return res.status(404).json({
-                    success: false,
-                    message:
-                        "Product not found",
-                });
-            }
+                        return res.status(500).json({
+                            success: false,
+                            message:
+                                "Failed to delete product",
+                            error:
+                                deleteError.message,
+                        });
+                    }
 
+                    if (
+                        result.affectedRows ===
+                        0
+                    ) {
+                        return res.status(404).json({
+                            success: false,
+                            message:
+                                "Product not found",
+                        });
+                    }
 
-            res.json({
-                success: true,
-                message:
-                    "Product deleted successfully",
-            });
+                    images.forEach(
+                        (image) => {
+                            const relativePath =
+                                image.image_url.replace(
+                                    /^\/+/,
+                                    ""
+                                );
+
+                            const filePath =
+                                path.join(
+                                    __dirname,
+                                    "..",
+                                    relativePath
+                                );
+
+                            fs.unlink(
+                                filePath,
+                                () => {}
+                            );
+                        }
+                    );
+
+                    return res.json({
+                        success: true,
+                        message:
+                            "Product deleted successfully",
+                    });
+                }
+            );
         }
     );
 };
 
-
-// ========================================
-// EXPORT
-// ========================================
-
 module.exports = {
-
     getProducts,
-
     getProductById,
-
     createProduct,
-
     uploadProductImages,
-
+    deleteProductImage,
     updateProduct,
-
     deleteProduct,
-
 };

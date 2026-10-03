@@ -4,22 +4,14 @@ const path = require("path");
 
 const db = require("./config/db");
 const productRoutes = require("./routes/productRoutes");
+const authRoutes = require("./routes/authRoutes");
 
 const app = express();
 
 const PORT = 5000;
 
-// ========================================
-// MIDDLEWARE
-// ========================================
-
 app.use(cors());
-
 app.use(express.json());
-
-// ========================================
-// SERVE UPLOADED IMAGES
-// ========================================
 
 app.use(
     "/uploads",
@@ -28,21 +20,12 @@ app.use(
     )
 );
 
-// ========================================
-// HOME
-// ========================================
-
 app.get("/", (req, res) => {
     res.json({
         success: true,
-        message:
-            "Hena Electronics Backend is running",
+        message: "Hena Electronics Backend is running",
     });
 });
-
-// ========================================
-// DATABASE TEST
-// ========================================
 
 app.get("/api/test-db", (req, res) => {
     db.query(
@@ -56,33 +39,28 @@ app.get("/api/test-db", (req, res) => {
 
                 return res.status(500).json({
                     success: false,
-                    message:
-                        "Database connection failed",
+                    message: "Database connection failed",
                 });
             }
 
             res.json({
                 success: true,
-                message:
-                    "Database connection is working",
+                message: "Database connection is working",
                 data: results,
             });
         }
     );
 });
 
-// ========================================
-// PRODUCT ROUTES
-// ========================================
+app.use(
+    "/api/auth",
+    authRoutes
+);
 
 app.use(
     "/api/products",
     productRoutes
 );
-
-// ========================================
-// ERROR HANDLER
-// ========================================
 
 app.use(
     (error, req, res, next) => {
@@ -104,9 +82,7 @@ app.use(
 
         if (
             error.message &&
-            error.message.includes(
-                "Only JPG"
-            )
+            error.message.includes("Only JPG")
         ) {
             return res.status(400).json({
                 success: false,
@@ -123,12 +99,11 @@ app.use(
     }
 );
 
-// ========================================
-// START SERVER
-// ========================================
-
-app.listen(PORT, () => {
-    console.log(
-        `Hena Electronics backend running on http://localhost:${PORT}`
-    );
-});
+app.listen(
+    PORT,
+    () => {
+        console.log(
+            `Hena Electronics backend running on http://localhost:${PORT}`
+        );
+    }
+);

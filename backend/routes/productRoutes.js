@@ -7,36 +7,29 @@ const {
     uploadProductImages,
     updateProduct,
     deleteProduct,
+    deleteProductImage,
 } = require("../controllers/productController");
 
 const upload = require("../middleware/upload");
 
-const router = express.Router();
+const authenticateAdmin = require("../middleware/authMiddleware");
 
-// ========================================
-// GET ALL PRODUCTS
-// ========================================
+const router = express.Router();
 
 router.get(
     "/",
     getProducts
 );
 
-// ========================================
-// CREATE PRODUCT
-// ========================================
-
 router.post(
     "/",
+    authenticateAdmin,
     createProduct
 );
 
-// ========================================
-// UPLOAD PRODUCT IMAGES
-// ========================================
-
 router.post(
     "/:id/images",
+    authenticateAdmin,
     upload.array(
         "images",
         3
@@ -44,30 +37,26 @@ router.post(
     uploadProductImages
 );
 
-// ========================================
-// GET ONE PRODUCT
-// ========================================
+router.delete(
+    "/:id/images/:imageId",
+    authenticateAdmin,
+    deleteProductImage
+);
 
 router.get(
     "/:id",
     getProductById
 );
 
-// ========================================
-// UPDATE PRODUCT
-// ========================================
-
 router.put(
     "/:id",
+    authenticateAdmin,
     updateProduct
 );
 
-// ========================================
-// DELETE PRODUCT
-// ========================================
-
 router.delete(
     "/:id",
+    authenticateAdmin,
     deleteProduct
 );
 

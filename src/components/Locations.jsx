@@ -18,8 +18,6 @@ function Locations() {
 
             <div className="location-grid">
 
-                {/* 4 Kilo */}
-
                 <div className="location-card">
 
                     <div className="location-icon">
@@ -69,9 +67,6 @@ function Locations() {
 
                 </div>
 
-
-                {/* Zenebework */}
-
                 <div className="location-card">
 
                     <div className="location-icon">
@@ -102,7 +97,7 @@ function Locations() {
                             </strong>
 
                             <span>
-                                +251 956 229 470
+                                +251 990239030
                             </span>
 
                         </div>

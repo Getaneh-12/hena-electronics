@@ -1,93 +1,116 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useProducts } from "../context/ProductContext";
+import henaLogo from "../assets/hena-logo.png";
 
 function AdminPromotions() {
-
-    const { products, removePromotion } = useProducts();
+    const {
+        products,
+        removePromotion,
+    } = useProducts();
 
     const [removeId, setRemoveId] = useState(null);
 
-
-    // ========================================
-    // PROMOTIONAL PRODUCTS
-    // ========================================
+    const [message, setMessage] = useState({
+        type: "",
+        text: "",
+    });
 
     const promotionProducts = products.filter(
-        (product) => product.promotion === "active"
+        (product) =>
+            product.promotion === "active"
     );
 
+    const totalPromotions =
+        promotionProducts.length;
 
-    // ========================================
-    // STATISTICS
-    // ========================================
-
-    const totalPromotions = promotionProducts.length;
-
-    const totalDiscount = promotionProducts.reduce(
-        (total, product) =>
-            total + Number(product.discount || 0),
-        0
-    );
+    const totalDiscount =
+        promotionProducts.reduce(
+            (total, product) =>
+                total +
+                Number(product.discount || 0),
+            0
+        );
 
     const averageDiscount =
         totalPromotions > 0
             ? Math.round(
-                totalDiscount / totalPromotions
+                totalDiscount /
+                totalPromotions
             )
             : 0;
 
-
-    // ========================================
-    // REMOVE PROMOTION
-    // ========================================
-
     const handleRemovePromotion = (id) => {
-
         setRemoveId(id);
-
     };
 
-
-    const confirmRemovePromotion = () => {
-
-        if (removeId !== null) {
-
-            removePromotion(removeId);
-
+    const confirmRemovePromotion = async () => {
+        if (removeId === null) {
+            return;
         }
 
-        setRemoveId(null);
+        try {
+            const result =
+                await removePromotion(removeId);
 
+            setMessage({
+                type: "success",
+                text:
+                    result?.message ||
+                    "Promotion removed successfully.",
+            });
+
+            setRemoveId(null);
+
+            setTimeout(() => {
+                setMessage({
+                    type: "",
+                    text: "",
+                });
+            }, 3000);
+        } catch (error) {
+            console.error(
+                "Remove promotion error:",
+                error
+            );
+
+            setMessage({
+                type: "error",
+                text:
+                    error.message ||
+                    "Failed to remove promotion.",
+            });
+
+            setRemoveId(null);
+
+            setTimeout(() => {
+                setMessage({
+                    type: "",
+                    text: "",
+                });
+            }, 3000);
+        }
     };
-
 
     const cancelRemovePromotion = () => {
-
         setRemoveId(null);
-
     };
 
-
     return (
-
         <div className="admin-dashboard">
-
-
-            {/* ========================================
-                SIDEBAR
-            ======================================== */}
 
             <aside className="admin-sidebar">
 
                 <div className="admin-brand">
 
                     <div className="admin-brand-logo">
-                        H
+                        <img
+                            src={henaLogo}
+                            alt="Hena Electronics"
+                        />
                     </div>
 
                     <div>
-
                         <h2>
                             Hena Electronics
                         </h2>
@@ -95,11 +118,9 @@ function AdminPromotions() {
                         <span>
                             Admin Panel
                         </span>
-
                     </div>
 
                 </div>
-
 
                 <nav className="admin-nav">
 
@@ -126,18 +147,7 @@ function AdminPromotions() {
 
             </aside>
 
-
-
-            {/* ========================================
-                MAIN CONTENT
-            ======================================== */}
-
             <main className="admin-main">
-
-
-                {/* ========================================
-                    HEADER
-                ======================================== */}
 
                 <div className="admin-header">
 
@@ -157,7 +167,6 @@ function AdminPromotions() {
 
                     </div>
 
-
                     <Link
                         to="/admin/products/add"
                         className="admin-view-button"
@@ -167,16 +176,34 @@ function AdminPromotions() {
 
                 </div>
 
+                {message.text && (
+                    <div
+                        className={`admin-message ${message.type}`}
+                    >
+                        <div className="admin-message-icon">
+                            {message.type ===
+                                "success"
+                                ? "✓"
+                                : "!"}
+                        </div>
 
+                        <div>
+                            <strong>
+                                {message.type ===
+                                    "success"
+                                    ? "Success"
+                                    : "Error"}
+                            </strong>
 
-                {/* ========================================
-                    STATISTICS
-                ======================================== */}
+                            <p>
+                                {message.text}
+                            </p>
+                        </div>
+
+                    </div>
+                )}
 
                 <div className="admin-stats">
-
-
-                    {/* ACTIVE PROMOTIONS */}
 
                     <div className="admin-stat-card">
 
@@ -185,7 +212,6 @@ function AdminPromotions() {
                         </div>
 
                         <div>
-
                             <span>
                                 Active Promotions
                             </span>
@@ -193,14 +219,9 @@ function AdminPromotions() {
                             <strong>
                                 {totalPromotions}
                             </strong>
-
                         </div>
 
                     </div>
-
-
-
-                    {/* AVERAGE DISCOUNT */}
 
                     <div className="admin-stat-card">
 
@@ -209,7 +230,6 @@ function AdminPromotions() {
                         </div>
 
                         <div>
-
                             <span>
                                 Average Discount
                             </span>
@@ -217,14 +237,9 @@ function AdminPromotions() {
                             <strong>
                                 {averageDiscount}%
                             </strong>
-
                         </div>
 
                     </div>
-
-
-
-                    {/* PROMOTIONAL PRODUCTS */}
 
                     <div className="admin-stat-card">
 
@@ -233,7 +248,6 @@ function AdminPromotions() {
                         </div>
 
                         <div>
-
                             <span>
                                 Promotional Products
                             </span>
@@ -241,21 +255,13 @@ function AdminPromotions() {
                             <strong>
                                 {promotionProducts.length}
                             </strong>
-
                         </div>
 
                     </div>
 
                 </div>
 
-
-
-                {/* ========================================
-                    PROMOTIONS SECTION
-                ======================================== */}
-
                 <section className="admin-section">
-
 
                     <div className="admin-section-heading">
 
@@ -273,13 +279,8 @@ function AdminPromotions() {
 
                     </div>
 
-
-
-                    {/* ========================================
-                        NO PROMOTIONS
-                    ======================================== */}
-
-                    {promotionProducts.length === 0 ? (
+                    {promotionProducts.length ===
+                        0 ? (
 
                         <div className="admin-empty-products">
 
@@ -307,27 +308,21 @@ function AdminPromotions() {
 
                     ) : (
 
-
-                        /* ========================================
-                           PROMOTION GRID
-                        ======================================== */
-
                         <div className="admin-promotion-grid">
 
                             {promotionProducts.map(
                                 (product) => {
 
-
-                                    // Calculate discounted price
-
                                     const originalPrice =
                                         Number(
-                                            product.price || 0
+                                            product.price ||
+                                            0
                                         );
 
                                     const discount =
                                         Number(
-                                            product.discount || 0
+                                            product.discount ||
+                                            0
                                         );
 
                                     const discountedPrice =
@@ -338,24 +333,17 @@ function AdminPromotions() {
                                             100
                                         );
 
-
                                     return (
-
                                         <div
                                             className="admin-promotion-card"
                                             key={product.id}
                                         >
 
-
-                                            {/* ========================================
-                                                PRODUCT IMAGE
-                                            ======================================== */}
-
                                             <div className="admin-promotion-image">
 
-
                                                 {product.images &&
-                                                    product.images.length > 0 ? (
+                                                    product.images.length >
+                                                    0 ? (
 
                                                     <img
                                                         src={
@@ -385,144 +373,85 @@ function AdminPromotions() {
 
                                                 )}
 
-
-                                                {/* DISCOUNT BADGE */}
-
                                                 <span className="admin-discount-badge">
-
                                                     🔥{" "}
-                                                    {discount}% OFF
-
+                                                    {discount}%
+                                                    OFF
                                                 </span>
 
                                             </div>
 
-
-
-                                            {/* ========================================
-                                                PRODUCT INFORMATION
-                                            ======================================== */}
-
                                             <div className="admin-promotion-content">
 
-
-                                                {/* CATEGORY */}
-
                                                 <p className="admin-promotion-category">
-
-                                                    {product.category}
-
+                                                    {
+                                                        product.category
+                                                    }
                                                 </p>
 
-
-                                                {/* PRODUCT NAME */}
-
                                                 <h3>
-
-                                                    {product.productName}
-
+                                                    {
+                                                        product.productName
+                                                    }
                                                 </h3>
 
-
-                                                {/* IMAGE COUNT */}
-
                                                 <span className="admin-promotion-image-count">
-
                                                     📷{" "}
 
                                                     {product.images &&
-                                                        product.images.length > 0
-
+                                                        product.images.length >
+                                                        0
                                                         ? `${product.images.length} images`
-
                                                         : product.image
                                                             ? "1 image"
                                                             : "No image"}
-
                                                 </span>
 
-
-
-                                                {/* ========================================
-                                                    PRICE INFORMATION
-                                                ======================================== */}
-
                                                 <div className="admin-promotion-price">
-
-
-                                                    {/* ORIGINAL PRICE */}
 
                                                     <div>
 
                                                         <span className="admin-original-price">
-
                                                             Original Price
-
                                                         </span>
 
                                                         <strong className="admin-original-price-value">
-
                                                             {originalPrice.toLocaleString()}{" "}
                                                             ETB
-
                                                         </strong>
 
                                                     </div>
 
-
-                                                    {/* DISCOUNTED PRICE */}
-
                                                     <div>
 
                                                         <span className="admin-sale-price-label">
-
                                                             Sale Price
-
                                                         </span>
 
                                                         <strong className="admin-sale-price">
-
                                                             {discountedPrice.toLocaleString()}{" "}
                                                             ETB
-
                                                         </strong>
 
                                                     </div>
 
                                                 </div>
-
-
-
-                                                {/* DISCOUNT INFORMATION */}
 
                                                 <div className="admin-promotion-discount-info">
 
                                                     You save{" "}
 
                                                     <strong>
-
-                                                        {
-                                                            (
-                                                                originalPrice -
-                                                                discountedPrice
-                                                            ).toLocaleString()
-                                                        }{" "}
+                                                        {(
+                                                            originalPrice -
+                                                            discountedPrice
+                                                        ).toLocaleString()}{" "}
                                                         ETB
-
                                                     </strong>
 
                                                 </div>
 
-
-
-                                                {/* ========================================
-                                                    ACTIONS
-                                                ======================================== */}
-
                                                 <div className="admin-promotion-actions">
-
-
-                                                    {/* EDIT */}
 
                                                     <Link
                                                         to={`/admin/products/edit/${product.id}`}
@@ -530,9 +459,6 @@ function AdminPromotions() {
                                                     >
                                                         Edit Promotion
                                                     </Link>
-
-
-                                                    {/* REMOVE */}
 
                                                     <button
                                                         type="button"
@@ -551,42 +477,35 @@ function AdminPromotions() {
                                             </div>
 
                                         </div>
-
                                     );
-
                                 }
                             )}
 
                         </div>
-
                     )}
 
                 </section>
 
             </main>
 
-
-
-            {/* ========================================
-                REMOVE PROMOTION MODAL
-            ======================================== */}
-
             {removeId !== null && (
 
                 <div className="product-delete-overlay">
 
-                    <div className="product-delete-modal">
-
+                    <div
+                        className="product-delete-modal"
+                        onClick={(event) =>
+                            event.stopPropagation()
+                        }
+                    >
 
                         <div className="product-delete-icon">
                             🔥
                         </div>
 
-
                         <h2>
                             Remove Promotion?
                         </h2>
-
 
                         <p>
                             This will remove the discount from
@@ -594,11 +513,7 @@ function AdminPromotions() {
                             not be deleted.
                         </p>
 
-
                         <div className="product-delete-actions">
-
-
-                            {/* CANCEL */}
 
                             <button
                                 type="button"
@@ -609,9 +524,6 @@ function AdminPromotions() {
                             >
                                 Cancel
                             </button>
-
-
-                            {/* REMOVE */}
 
                             <button
                                 type="button"
@@ -628,7 +540,6 @@ function AdminPromotions() {
                     </div>
 
                 </div>
-
             )}
 
         </div>

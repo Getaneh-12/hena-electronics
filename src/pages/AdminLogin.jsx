@@ -4,51 +4,49 @@ import { useAdminAuth } from "../context/AdminAuthContext";
 import henaLogo from "../assets/hena-logo.png";
 
 function AdminLogin() {
-
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
+    const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
 
     const navigate = useNavigate();
 
     const { login } = useAdminAuth();
 
-
-    const handleSubmit = (event) => {
-
+    const handleSubmit = async (event) => {
         event.preventDefault();
 
-        const success = login(
+        setError("");
+        setLoading(true);
+
+        const result = await login(
             username,
             password
         );
 
-        if (success) {
+        setLoading(false);
 
+        if (result.success) {
             navigate("/admin");
-
-        } else {
-
-            alert("Invalid username or password.");
-
+            return;
         }
 
+        setError(
+            result.message ||
+            "Invalid username or password."
+        );
     };
 
-
     return (
-
         <div className="admin-login-page">
-
             <div className="admin-login-card">
 
-                {/* HENA ELECTRONICS LOGO */}
                 <div className="admin-login-logo">
                     <img
                         src={henaLogo}
                         alt="Hena Electronics"
                     />
                 </div>
-
 
                 <h1>
                     Hena Electronics
@@ -58,11 +56,15 @@ function AdminLogin() {
                     Admin Dashboard
                 </p>
 
+                {error && (
+                    <div className="admin-login-error">
+                        {error}
+                    </div>
+                )}
 
                 <form onSubmit={handleSubmit}>
 
                     <div className="form-group">
-
                         <label htmlFor="username">
                             Username
                         </label>
@@ -78,13 +80,11 @@ function AdminLogin() {
                             }
                             placeholder="Enter username"
                             required
+                            disabled={loading}
                         />
-
                     </div>
 
-
                     <div className="form-group">
-
                         <label htmlFor="password">
                             Password
                         </label>
@@ -100,20 +100,21 @@ function AdminLogin() {
                             }
                             placeholder="Enter password"
                             required
+                            disabled={loading}
                         />
-
                     </div>
-
 
                     <button
                         type="submit"
                         className="admin-login-button"
+                        disabled={loading}
                     >
-                        Login
+                        {loading
+                            ? "Logging in..."
+                            : "Login"}
                     </button>
 
                 </form>
-
 
                 <Link
                     to="/"
@@ -123,9 +124,7 @@ function AdminLogin() {
                 </Link>
 
             </div>
-
         </div>
-
     );
 }
 

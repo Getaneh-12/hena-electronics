@@ -4,8 +4,6 @@ function About() {
 
             <div className="about-content">
 
-                {/* LEFT SIDE */}
-
                 <div className="about-text">
 
                     <p className="about-label">
@@ -34,25 +32,25 @@ function About() {
                         rel="noreferrer"
                         className="about-button"
                     >
-                        Visit Our Telegram Group →
+                        Visit Our Telegram Group
+                        <span>→</span>
                     </a>
 
                 </div>
 
-
-                {/* RIGHT SIDE */}
-
                 <div className="about-features">
 
-                    {/* FEATURE 1 */}
-
-                    <div className="about-feature">
+                    <div className="about-feature about-feature-main">
 
                         <div className="about-feature-icon">
                             ✓
                         </div>
 
-                        <div>
+                        <div className="about-feature-content">
+
+                            <span className="about-feature-number">
+                                01
+                            </span>
 
                             <h3>
                                 Quality Products
@@ -60,15 +58,13 @@ function About() {
 
                             <p>
                                 Smartphones, laptops and accessories
-                                selected for our customers.
+                                selected with quality and customer needs
+                                in mind.
                             </p>
 
                         </div>
 
                     </div>
-
-
-                    {/* FEATURE 2 */}
 
                     <div className="about-feature">
 
@@ -76,7 +72,11 @@ function About() {
                             ⚡
                         </div>
 
-                        <div>
+                        <div className="about-feature-content">
+
+                            <span className="about-feature-number">
+                                02
+                            </span>
 
                             <h3>
                                 Latest Offers
@@ -91,16 +91,17 @@ function About() {
 
                     </div>
 
-
-                    {/* FEATURE 3 */}
-
                     <div className="about-feature">
 
                         <div className="about-feature-icon">
                             📍
                         </div>
 
-                        <div>
+                        <div className="about-feature-content">
+
+                            <span className="about-feature-number">
+                                03
+                            </span>
 
                             <h3>
                                 Convenient Locations

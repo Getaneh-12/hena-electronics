@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useAdminAuth } from "../context/AdminAuthContext";
 
 const API_URL = "http://localhost:5000/api/products";
 
 function AddProduct() {
+    const { getToken } = useAdminAuth();
+
     const [formData, setFormData] = useState({
         productName: "",
         category: "",
@@ -26,10 +29,6 @@ function AddProduct() {
         text: "",
     });
 
-    // ========================================
-    // FORM CHANGE
-    // ========================================
-
     const handleChange = (event) => {
         const { name, value } = event.target;
 
@@ -39,10 +38,6 @@ function AddProduct() {
         }));
     };
 
-    // ========================================
-    // IMAGE CHANGE
-    // ========================================
-
     const handleImageChange = (event) => {
         const selectedFiles = Array.from(
             event.target.files
@@ -51,10 +46,6 @@ function AddProduct() {
         if (selectedFiles.length === 0) {
             return;
         }
-
-        // ========================================
-        // CHECK TOTAL IMAGE COUNT
-        // ========================================
 
         const currentFiles = imagePreviews.map(
             (preview) => preview.file
@@ -73,10 +64,6 @@ function AddProduct() {
             event.target.value = "";
             return;
         }
-
-        // ========================================
-        // CHECK IMAGE TYPES
-        // ========================================
 
         const allowedTypes = [
             "image/jpeg",
@@ -103,10 +90,6 @@ function AddProduct() {
             return;
         }
 
-        // ========================================
-        // CHECK IMAGE SIZE
-        // ========================================
-
         const largeFile =
             selectedFiles.find(
                 (file) =>
@@ -124,10 +107,6 @@ function AddProduct() {
             return;
         }
 
-        // ========================================
-        // CREATE PREVIEWS
-        // ========================================
-
         const newPreviews =
             selectedFiles.map(
                 (file) => ({
@@ -137,10 +116,6 @@ function AddProduct() {
                     ),
                 })
             );
-
-        // ========================================
-        // ADD NEW IMAGES
-        // ========================================
 
         setImagePreviews(
             (previous) => [
@@ -156,10 +131,6 @@ function AddProduct() {
 
         event.target.value = "";
     };
-
-    // ========================================
-    // REMOVE IMAGE
-    // ========================================
 
     const removeImage = (index) => {
         setImagePreviews(
@@ -184,16 +155,8 @@ function AddProduct() {
         );
     };
 
-    // ========================================
-    // SUBMIT PRODUCT
-    // ========================================
-
     const handleSubmit = async (event) => {
         event.preventDefault();
-
-        // ========================================
-        // VALIDATE PRODUCT NAME
-        // ========================================
 
         if (
             !formData.productName.trim()
@@ -211,10 +174,6 @@ function AddProduct() {
             return;
         }
 
-        // ========================================
-        // VALIDATE CATEGORY
-        // ========================================
-
         if (!formData.category) {
             setMessage({
                 type: "error",
@@ -228,10 +187,6 @@ function AddProduct() {
 
             return;
         }
-
-        // ========================================
-        // VALIDATE PRICE
-        // ========================================
 
         if (
             !formData.price ||
@@ -250,10 +205,6 @@ function AddProduct() {
             return;
         }
 
-        // ========================================
-        // VALIDATE PROMOTION
-        // ========================================
-
         if (
             formData.promotion === "active" &&
             Number(formData.discount) <= 0
@@ -271,14 +222,26 @@ function AddProduct() {
             return;
         }
 
-        // ========================================
-        // VALIDATE IMAGE COUNT
-        // ========================================
-
         if (imagePreviews.length > 3) {
             setMessage({
                 type: "error",
                 text: "You can upload a maximum of 3 images.",
+            });
+
+            window.scrollTo({
+                top: 0,
+                behavior: "smooth",
+            });
+
+            return;
+        }
+
+        const token = getToken();
+
+        if (!token) {
+            setMessage({
+                type: "error",
+                text: "Your admin session has expired. Please log in again.",
             });
 
             window.scrollTo({
@@ -297,10 +260,6 @@ function AddProduct() {
         });
 
         try {
-            // ========================================
-            // CREATE PRODUCT
-            // ========================================
-
             const productResponse =
                 await fetch(API_URL, {
                     method: "POST",
@@ -308,6 +267,9 @@ function AddProduct() {
                     headers: {
                         "Content-Type":
                             "application/json",
+
+                        Authorization:
+                            `Bearer ${token}`,
                     },
 
                     body: JSON.stringify({
@@ -368,10 +330,6 @@ function AddProduct() {
                 );
             }
 
-            // ========================================
-            // GET PRODUCT ID
-            // ========================================
-
             const productId =
                 productData.productId ||
                 productData.data?.productId ||
@@ -382,10 +340,6 @@ function AddProduct() {
                     "Product was created, but its ID was not returned."
                 );
             }
-
-            // ========================================
-            // UPLOAD ALL IMAGES
-            // ========================================
 
             if (
                 imagePreviews.length > 0
@@ -407,7 +361,14 @@ function AddProduct() {
                         `${API_URL}/${productId}/images`,
                         {
                             method: "POST",
-                            body: imageFormData,
+
+                            headers: {
+                                Authorization:
+                                    `Bearer ${token}`,
+                            },
+
+                            body:
+                                imageFormData,
                         }
                     );
 
@@ -425,18 +386,10 @@ function AddProduct() {
                 }
             }
 
-            // ========================================
-            // SUCCESS MESSAGE
-            // ========================================
-
             setMessage({
                 type: "success",
                 text: "Product and images were added successfully.",
             });
-
-            // ========================================
-            // RESET FORM
-            // ========================================
 
             setFormData({
                 productName: "",
@@ -453,10 +406,6 @@ function AddProduct() {
                 promotion:
                     "inactive",
             });
-
-            // ========================================
-            // CLEAN UP PREVIEW URLS
-            // ========================================
 
             imagePreviews.forEach(
                 (preview) => {
@@ -506,10 +455,6 @@ function AddProduct() {
     return (
         <div className="admin-page">
 
-            {/* ========================================
-                HEADER
-            ======================================== */}
-
             <div className="add-product-title">
 
                 <span>
@@ -529,10 +474,6 @@ function AddProduct() {
                 </Link>
 
             </div>
-
-            {/* ========================================
-                NOTIFICATION
-            ======================================== */}
 
             {message.text && (
                 <div
@@ -564,18 +505,10 @@ function AddProduct() {
                 </div>
             )}
 
-            {/* ========================================
-                FORM
-            ======================================== */}
-
             <form
                 className="admin-product-form"
                 onSubmit={handleSubmit}
             >
-
-                {/* ========================================
-                    BASIC INFORMATION
-                ======================================== */}
 
                 <section className="admin-form-section">
 
@@ -592,8 +525,6 @@ function AddProduct() {
                     </div>
 
                     <div className="admin-form-grid">
-
-                        {/* PRODUCT NAME */}
 
                         <div className="admin-form-group">
 
@@ -617,8 +548,6 @@ function AddProduct() {
                             />
 
                         </div>
-
-                        {/* CATEGORY */}
 
                         <div className="admin-form-group">
 
@@ -659,8 +588,6 @@ function AddProduct() {
 
                         </div>
 
-                        {/* PRICE */}
-
                         <div className="admin-form-group">
 
                             <label>
@@ -694,8 +621,6 @@ function AddProduct() {
 
                         </div>
 
-                        {/* AVAILABILITY */}
-
                         <div className="admin-form-group">
 
                             <label>
@@ -726,8 +651,6 @@ function AddProduct() {
 
                     </div>
 
-                    {/* DESCRIPTION */}
-
                     <div className="admin-form-group admin-description-group">
 
                         <label>
@@ -750,10 +673,6 @@ function AddProduct() {
 
                 </section>
 
-                {/* ========================================
-                    PRODUCT DETAILS
-                ======================================== */}
-
                 <section className="admin-form-section">
 
                     <div className="admin-form-section-header">
@@ -769,8 +688,6 @@ function AddProduct() {
                     </div>
 
                     <div className="admin-form-grid">
-
-                        {/* BRAND */}
 
                         <div className="admin-form-group">
 
@@ -792,8 +709,6 @@ function AddProduct() {
 
                         </div>
 
-                        {/* MODEL */}
-
                         <div className="admin-form-group">
 
                             <label>
@@ -814,8 +729,6 @@ function AddProduct() {
 
                         </div>
 
-                        {/* STORAGE */}
-
                         <div className="admin-form-group">
 
                             <label>
@@ -835,8 +748,6 @@ function AddProduct() {
                             />
 
                         </div>
-
-                        {/* RAM */}
 
                         <div className="admin-form-group">
 
@@ -862,10 +773,6 @@ function AddProduct() {
 
                 </section>
 
-                {/* ========================================
-                    PROMOTION
-                ======================================== */}
-
                 <section className="admin-form-section">
 
                     <div className="admin-form-section-header">
@@ -881,8 +788,6 @@ function AddProduct() {
                     </div>
 
                     <div className="admin-form-grid">
-
-                        {/* PROMOTION STATUS */}
 
                         <div className="admin-form-group">
 
@@ -911,8 +816,6 @@ function AddProduct() {
                             </select>
 
                         </div>
-
-                        {/* DISCOUNT */}
 
                         <div className="admin-form-group">
 
@@ -948,10 +851,6 @@ function AddProduct() {
                     </div>
 
                 </section>
-
-                {/* ========================================
-                    PRODUCT IMAGES
-                ======================================== */}
 
                 <section className="admin-form-section">
 
@@ -1004,8 +903,6 @@ function AddProduct() {
 
                     </div>
 
-                    {/* IMAGE COUNTER */}
-
                     <div
                         className="admin-image-counter"
                         style={{
@@ -1017,8 +914,6 @@ function AddProduct() {
                         {imagePreviews.length}
                         /3 images selected
                     </div>
-
-                    {/* IMAGE PREVIEW */}
 
                     {imagePreviews.length > 0 && (
                         <div className="admin-image-preview-grid">
@@ -1067,10 +962,6 @@ function AddProduct() {
                     )}
 
                 </section>
-
-                {/* ========================================
-                    ACTION BUTTONS
-                ======================================== */}
 
                 <div className="admin-form-actions">
 

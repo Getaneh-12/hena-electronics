@@ -5,8 +5,6 @@ function Footer() {
         <footer className="footer">
 
             <div className="footer-container">
-
-                {/* Brand */}
                 <div className="footer-brand">
 
                     <div className="footer-brand-header">
@@ -22,7 +20,7 @@ function Footer() {
                         <div className="footer-brand-text">
                             <h2>Hena Electronics</h2>
 
-                            <p>
+                            s    <p>
                                 Mobile • PC • Electronics
                             </p>
                         </div>
@@ -35,9 +33,6 @@ function Footer() {
                     </p>
 
                 </div>
-
-
-                {/* Quick Links */}
                 <div className="footer-links">
 
                     <h3>Quick Links</h3>
@@ -51,19 +46,21 @@ function Footer() {
 
                 </div>
 
-
-                {/* Locations */}
                 <div className="footer-links">
 
                     <h3>Our Locations</h3>
+                    <a
+                        href="https://www.google.com/maps/search/?api=1&query=4%20Kilo%20Square%2C%20Addis%20Ababa%2C%20Ethiopia"
+                        target="_blank"
+                        rel="noreferrer">📍 4 kilo </a>
 
-                    <span>📍 4 Kilo</span>
-                    <span>📍 Zenebework</span>
+                    <a
+                        href="https://www.google.com/maps/search/?api=1&query=Zenebework%20Square%2C%20Addis%20Ababa%2C%20Ethiopia"
+                        target="_blank"
+                        rel="noreferrer">📍 Zenebework</a>
 
                 </div>
 
-
-                {/* Contact */}
                 <div className="footer-links">
 
                     <h3>Contact Us</h3>
@@ -72,7 +69,7 @@ function Footer() {
                         href="tel:+251956229470"
                         className="footer-phone"
                     >
-                        📞 +251 956229470
+                        📞 +251 990239030
                     </a>
 
                     <a
@@ -80,15 +77,12 @@ function Footer() {
                         target="_blank"
                         rel="noreferrer"
                     >
-                        ✈️ Telegram group
+                        ✈️ View Telegram group
                     </a>
 
                 </div>
 
             </div>
-
-
-            {/* Footer Bottom */}
             <div className="footer-bottom">
 
                 <p>

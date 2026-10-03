@@ -1,22 +1,19 @@
 import { Navigate } from "react-router-dom";
+import { useAdminAuth } from "../context/AdminAuthContext";
 
 function ProtectedRoute({ children }) {
+    const {
+        isAdminLoggedIn,
+    } = useAdminAuth();
 
-    const isLoggedIn =
-        localStorage.getItem("henaAdminLoggedIn") === "true";
-
-
-    if (!isLoggedIn) {
-
+    if (!isAdminLoggedIn) {
         return (
             <Navigate
                 to="/admin/login"
                 replace
             />
         );
-
     }
-
 
     return children;
 }
