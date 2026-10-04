@@ -1,48 +1,11 @@
 const multer = require("multer");
-const path = require("path");
 
 // ========================================
 // STORAGE
 // ========================================
 
 const storage =
-    multer.diskStorage({
-        destination: (
-            req,
-            file,
-            cb
-        ) => {
-            cb(
-                null,
-                path.join(
-                    __dirname,
-                    "../uploads/products"
-                )
-            );
-        },
-
-        filename: (
-            req,
-            file,
-            cb
-        ) => {
-            const extension =
-                path.extname(
-                    file.originalname
-                ).toLowerCase();
-
-            const uniqueName =
-                `${Date.now()}-${Math.round(
-                    Math.random() *
-                        1000000000
-                )}${extension}`;
-
-            cb(
-                null,
-                uniqueName
-            );
-        },
-    });
+    multer.memoryStorage();
 
 // ========================================
 // FILE FILTER

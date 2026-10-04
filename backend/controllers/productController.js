@@ -1,8 +1,16 @@
 const db = require("../config/db");
-const fs = require("fs");
-const path = require("path");
 
-const getProducts = (req, res) => {
+const cloudinary =
+    require("../config/cloudinary");
+
+// ========================================
+// GET ALL PRODUCTS
+// ========================================
+
+const getProducts = (
+    req,
+    res
+) => {
     const productSql = `
         SELECT *
         FROM products
@@ -27,7 +35,9 @@ const getProducts = (req, res) => {
                 });
             }
 
-            if (products.length === 0) {
+            if (
+                products.length === 0
+            ) {
                 return res.json({
                     success: true,
                     products: [],
@@ -63,7 +73,9 @@ const getProducts = (req, res) => {
                             imageError
                         );
 
-                        return res.status(500).json({
+                        return res.status(
+                            500
+                        ).json({
                             success: false,
                             message:
                                 "Failed to fetch product images",
@@ -74,7 +86,9 @@ const getProducts = (req, res) => {
 
                     const productsWithImages =
                         products.map(
-                            (product) => {
+                            (
+                                product
+                            ) => {
                                 const productImages =
                                     images.filter(
                                         (
@@ -90,6 +104,7 @@ const getProducts = (req, res) => {
 
                                 return {
                                     ...product,
+
                                     images:
                                         productImages.map(
                                             (
@@ -97,6 +112,7 @@ const getProducts = (req, res) => {
                                             ) =>
                                                 image.image_url
                                         ),
+
                                     imageDetails:
                                         productImages.map(
                                             (
@@ -106,19 +122,22 @@ const getProducts = (req, res) => {
                                                     Number(
                                                         image.id
                                                     ),
+
                                                 product_id:
                                                     Number(
                                                         image.product_id
                                                     ),
+
                                                 image_url:
                                                     image.image_url,
                                             })
                                         ),
+
                                     image:
                                         productImages.length >
                                         0
                                             ? productImages[0]
-                                                .image_url
+                                                  .image_url
                                             : null,
                                 };
                             }
@@ -134,6 +153,10 @@ const getProducts = (req, res) => {
         }
     );
 };
+
+// ========================================
+// GET PRODUCT BY ID
+// ========================================
 
 const getProductById = (
     req,
@@ -171,8 +194,7 @@ const getProductById = (
             }
 
             if (
-                products.length ===
-                0
+                products.length === 0
             ) {
                 return res.status(404).json({
                     success: false,
@@ -207,7 +229,9 @@ const getProductById = (
                             imageError
                         );
 
-                        return res.status(500).json({
+                        return res.status(
+                            500
+                        ).json({
                             success: false,
                             message:
                                 "Failed to fetch product images",
@@ -218,8 +242,10 @@ const getProductById = (
 
                     return res.json({
                         success: true,
+
                         product: {
                             ...product,
+
                             images:
                                 images.map(
                                     (
@@ -227,6 +253,7 @@ const getProductById = (
                                     ) =>
                                         image.image_url
                                 ),
+
                             imageDetails:
                                 images.map(
                                     (
@@ -236,19 +263,22 @@ const getProductById = (
                                             Number(
                                                 image.id
                                             ),
+
                                         product_id:
                                             Number(
                                                 image.product_id
                                             ),
+
                                         image_url:
                                             image.image_url,
                                     })
                                 ),
+
                             image:
                                 images.length >
                                 0
                                     ? images[0]
-                                        .image_url
+                                          .image_url
                                     : null,
                         },
                     });
@@ -257,6 +287,10 @@ const getProductById = (
         }
     );
 };
+
+// ========================================
+// CREATE PRODUCT
+// ========================================
 
 const createProduct = (
     req,
@@ -355,6 +389,10 @@ const createProduct = (
     );
 };
 
+// ========================================
+// UPLOAD PRODUCT IMAGES
+// ========================================
+
 const uploadProductImages = (
     req,
     res
@@ -382,7 +420,7 @@ const uploadProductImages = (
     db.query(
         checkProductSql,
         [id],
-        (
+        async (
             productError,
             products
         ) => {
@@ -402,8 +440,7 @@ const uploadProductImages = (
             }
 
             if (
-                products.length ===
-                0
+                products.length === 0
             ) {
                 return res.status(404).json({
                     success: false,
@@ -412,52 +449,145 @@ const uploadProductImages = (
                 });
             }
 
-            const imageValues =
-                req.files.map(
-                    (file) => [
-                        id,
-                        `/uploads/products/${file.filename}`,
-                    ]
-                );
+            try {
+                const uploadedImages =
+                    [];
 
-            const imageSql = `
-                INSERT INTO product_images
-                (
-                    product_id,
-                    image_url
-                )
-                VALUES ?
-            `;
+                for (
+                    const file of req.files
+                ) {
+                    const result =
+                        await new Promise(
+                            (
+                                resolve,
+                                reject
+                            ) => {
+                                const uploadStream =
+                                    cloudinary.uploader.upload_stream(
+                                        {
+                                            folder:
+                                                "hena-products",
 
-            db.query(
-                imageSql,
-                [imageValues],
-                (imageError) => {
-                    if (imageError) {
-                        console.error(
-                            "Upload product images error:",
-                            imageError
+                                            resource_type:
+                                                "image",
+                                        },
+
+                                        (
+                                            error,
+                                            result
+                                        ) => {
+                                            if (
+                                                error
+                                            ) {
+                                                reject(
+                                                    error
+                                                );
+                                            } else {
+                                                resolve(
+                                                    result
+                                                );
+                                            }
+                                        }
+                                    );
+
+                                uploadStream.end(
+                                    file.buffer
+                                );
+                            }
                         );
 
-                        return res.status(500).json({
-                            success: false,
-                            message:
-                                "Failed to save product images",
-                            error:
-                                imageError.message,
-                        });
-                    }
+                    uploadedImages.push({
+                        url:
+                            result.secure_url,
 
-                    return res.json({
-                        success: true,
-                        message:
-                            "Product images uploaded successfully",
+                        publicId:
+                            result.public_id,
                     });
                 }
-            );
+
+                const imageValues =
+                    uploadedImages.map(
+                        (
+                            image
+                        ) => [
+                            id,
+                            image.url,
+                        ]
+                    );
+
+                const imageSql = `
+                    INSERT INTO product_images
+                    (
+                        product_id,
+                        image_url
+                    )
+                    VALUES ?
+                `;
+
+                db.query(
+                    imageSql,
+                    [imageValues],
+                    (
+                        imageError
+                    ) => {
+                        if (
+                            imageError
+                        ) {
+                            console.error(
+                                "Save Cloudinary image URLs error:",
+                                imageError
+                            );
+
+                            return res.status(
+                                500
+                            ).json({
+                                success: false,
+                                message:
+                                    "Failed to save product images",
+                                error:
+                                    imageError.message,
+                            });
+                        }
+
+                        return res.json({
+                            success: true,
+
+                            message:
+                                "Product images uploaded successfully",
+
+                            images:
+                                uploadedImages.map(
+                                    (
+                                        image
+                                    ) =>
+                                        image.url
+                                ),
+                        });
+                    }
+                );
+            } catch (
+                uploadError
+            ) {
+                console.error(
+                    "Cloudinary upload error:",
+                    uploadError
+                );
+
+                return res.status(500).json({
+                    success: false,
+                    message:
+                        "Failed to upload images to Cloudinary",
+                    error:
+                        uploadError.message,
+                });
+            }
         }
     );
 };
+
+// ========================================
+// DELETE PRODUCT IMAGE
+// ========================================
 
 const deleteProductImage = (
     req,
@@ -504,8 +634,7 @@ const deleteProductImage = (
             }
 
             if (
-                results.length ===
-                0
+                results.length === 0
             ) {
                 return res.status(404).json({
                     success: false,
@@ -529,7 +658,7 @@ const deleteProductImage = (
                     imageId,
                     id,
                 ],
-                (
+                async (
                     deleteError,
                     deleteResult
                 ) => {
@@ -541,7 +670,9 @@ const deleteProductImage = (
                             deleteError
                         );
 
-                        return res.status(500).json({
+                        return res.status(
+                            500
+                        ).json({
                             success: false,
                             message:
                                 "Failed to delete product image",
@@ -554,58 +685,87 @@ const deleteProductImage = (
                         deleteResult.affectedRows ===
                         0
                     ) {
-                        return res.status(404).json({
+                        return res.status(
+                            404
+                        ).json({
                             success: false,
                             message:
                                 "Product image not found",
                         });
                     }
 
-                    const relativePath =
-                        image.image_url.replace(
-                            /^\/+/,
-                            ""
-                        );
+                    try {
+                        const imageUrl =
+                            image.image_url;
 
-                    const filePath =
-                        path.join(
-                            __dirname,
-                            "..",
-                            relativePath
-                        );
+                        if (
+                            imageUrl &&
+                            imageUrl.includes(
+                                "res.cloudinary.com"
+                            )
+                        ) {
+                            const parts =
+                                imageUrl.split(
+                                    "/upload/"
+                                );
 
-                    fs.unlink(
-                        filePath,
-                        (
-                            fileError
-                        ) => {
                             if (
-                                fileError &&
-                                fileError.code !==
-                                    "ENOENT"
+                                parts.length ===
+                                2
                             ) {
-                                console.error(
-                                    "Delete image file error:",
-                                    fileError
+                                let publicId =
+                                    parts[1];
+
+                                publicId =
+                                    publicId.replace(
+                                        /^v\d+\//,
+                                        ""
+                                    );
+
+                                publicId =
+                                    publicId.replace(
+                                        /\.[^/.]+$/,
+                                        ""
+                                    );
+
+                                await cloudinary.uploader.destroy(
+                                    publicId,
+                                    {
+                                        resource_type:
+                                            "image",
+                                    }
                                 );
                             }
-
-                            return res.json({
-                                success: true,
-                                message:
-                                    "Product image deleted successfully",
-                                deletedImageId:
-                                    Number(
-                                        imageId
-                                    ),
-                            });
                         }
-                    );
+                    } catch (
+                        cloudinaryError
+                    ) {
+                        console.error(
+                            "Delete Cloudinary image error:",
+                            cloudinaryError
+                        );
+                    }
+
+                    return res.json({
+                        success: true,
+
+                        message:
+                            "Product image deleted successfully",
+
+                        deletedImageId:
+                            Number(
+                                imageId
+                            ),
+                    });
                 }
             );
         }
     );
 };
+
+// ========================================
+// UPDATE PRODUCT
+// ========================================
 
 const updateProduct = (
     req,
@@ -703,6 +863,10 @@ const updateProduct = (
     );
 };
 
+// ========================================
+// DELETE PRODUCT
+// ========================================
+
 const deleteProduct = (
     req,
     res
@@ -746,7 +910,7 @@ const deleteProduct = (
             db.query(
                 deleteSql,
                 [id],
-                (
+                async (
                     deleteError,
                     result
                 ) => {
@@ -758,7 +922,9 @@ const deleteProduct = (
                             deleteError
                         );
 
-                        return res.status(500).json({
+                        return res.status(
+                            500
+                        ).json({
                             success: false,
                             message:
                                 "Failed to delete product",
@@ -771,34 +937,70 @@ const deleteProduct = (
                         result.affectedRows ===
                         0
                     ) {
-                        return res.status(404).json({
+                        return res.status(
+                            404
+                        ).json({
                             success: false,
                             message:
                                 "Product not found",
                         });
                     }
 
-                    images.forEach(
-                        (image) => {
-                            const relativePath =
-                                image.image_url.replace(
-                                    /^\/+/,
-                                    ""
-                                );
+                    for (
+                        const image of images
+                    ) {
+                        try {
+                            const imageUrl =
+                                image.image_url;
 
-                            const filePath =
-                                path.join(
-                                    __dirname,
-                                    "..",
-                                    relativePath
-                                );
+                            if (
+                                imageUrl &&
+                                imageUrl.includes(
+                                    "res.cloudinary.com"
+                                )
+                            ) {
+                                const parts =
+                                    imageUrl.split(
+                                        "/upload/"
+                                    );
 
-                            fs.unlink(
-                                filePath,
-                                () => {}
+                                if (
+                                    parts.length ===
+                                    2
+                                ) {
+                                    let publicId =
+                                        parts[1];
+
+                                    publicId =
+                                        publicId.replace(
+                                            /^v\d+\//,
+                                            ""
+                                        );
+
+                                    publicId =
+                                        publicId.replace(
+                                            /\.[^/.]+$/,
+                                            ""
+                                        );
+
+                                    await cloudinary.uploader.destroy(
+                                        publicId,
+                                        {
+                                            resource_type:
+                                                "image",
+                                        }
+                                    );
+                                }
+                            }
+                        } catch (
+                            cloudinaryError
+                        ) {
+                            console.error(
+                                "Delete Cloudinary image error:",
+                                cloudinaryError
                             );
                         }
-                    );
+                    }
 
                     return res.json({
                         success: true,
@@ -810,6 +1012,10 @@ const deleteProduct = (
         }
     );
 };
+
+// ========================================
+// EXPORT CONTROLLERS
+// ========================================
 
 module.exports = {
     getProducts,
