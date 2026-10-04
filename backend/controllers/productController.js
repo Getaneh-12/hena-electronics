@@ -291,7 +291,7 @@ const createProduct = (
     const sql = `
         INSERT INTO products
         (
-            product_name,
+            productName,
             category,
             price,
             availability,
@@ -631,7 +631,7 @@ const updateProduct = (
     const sql = `
         UPDATE products
         SET
-            product_name = ?,
+            productName = ?,
             category = ?,
             price = ?,
             availability = ?,

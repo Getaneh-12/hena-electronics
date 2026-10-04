@@ -377,7 +377,7 @@ function ProductDetails() {
                                         ✈
                                     </span>
 
-                                    Telegram group
+                                    Contact via Telegram
                                 </a>
 
                             </div>

@@ -76,7 +76,7 @@ function AdminDashboard() {
                 return image;
             }
 
-            return `http://localhost:5000${image}`;
+            return `${import.meta.env.VITE_API_URL}${image}`;
         }
 
         if (product.image) {
@@ -88,7 +88,7 @@ function AdminDashboard() {
                 return product.image;
             }
 
-            return `http://localhost:5000${product.image}`;
+            return `${import.meta.env.VITE_API_URL}${product.image}`;
         }
 
         return null;

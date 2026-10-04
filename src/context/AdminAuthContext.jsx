@@ -8,7 +8,7 @@ const AdminAuthContext =
     createContext(null);
 
 const API_URL =
-    "http://localhost:5000/api/auth";
+    `${import.meta.env.VITE_API_URL}/api/auth`;
 
 export function AdminAuthProvider({
     children,
