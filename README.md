@@ -1,16 +1,70 @@
-# React + Vite
+# Hena Electronics
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+A modern, full-stack e-commerce website developed for **Hena Electronics**, a technology store specializing in mobile phones, laptops, and electronic accessories.
 
-Currently, two official plugins are available:
+## 🌐 Live Demo
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+**[Hena Electronics](https://hena-electronics.onrender.com/)**
 
-## React Compiler
+## ✨ Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Customer
 
-## Expanding the Oxlint configuration
+- Responsive product catalog
+- Product search and category filtering
+- Product details with multiple images
+- Pricing, availability, and promotions
+- Store locations and contact information
+- Telegram integration
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+### Admin
+
+- Secure JWT-based authentication
+- Product CRUD operations
+- Multiple product image uploads
+- Image deletion and management
+- Promotion management
+- Product search and filtering
+- Protected admin routes
+
+## 🛠️ Technologies
+
+- **Frontend:** React, Vite, JavaScript, CSS
+- **Backend:** Node.js, Express.js
+- **Database:** MySQL
+- **Image Storage:** Cloudinary
+- **Authentication:** JWT
+- **Deployment:** Render
+- **Version Control:** Git & GitHub
+
+## 📱 Categories
+
+- Smartphones
+- Laptops
+- Accessories
+
+## 🏗️ Architecture
+
+```text
+React + Vite
+      │
+      ▼
+Node.js + Express
+      │
+   ┌──┴───────────┐
+   ▼              ▼
+ MySQL        Cloudinary
+Database      Image Storage
+```
+
+## 👨‍💻 Developer
+
+**Getaneh**
+Computer Science Student
+Addis Ababa University
+
+**GitHub:** [Getaneh-12](https://github.com/Getaneh-12)
+
+---
+
+© 2026 Hena Electronics. All rights reserved.
