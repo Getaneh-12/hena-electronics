@@ -8,38 +8,45 @@ function Hero() {
 
             <div className="hero-content">
 
+                {/* Main business heading */}
+                <h1 className="hero-small-title">
+                    WELCOME TO HENA ELECTRONICS
+                </h1>
+
                 {/* Small badge */}
                 <div className="hero-badge">
                     <span className="hero-badge-dot"></span>
                     Quality Technology • Trusted Service
                 </div>
 
-                {/* Small title */}
-                <p className="hero-small-title">
-                    WELCOME TO HENA ELECTRONICS
-                </p>
-
-                {/* Main heading */}
-                <h1>
+                {/* Main slogan */}
+                <h2>
                     Your Technology.
                     <span>Your Choice.</span>
-                </h1>
+                </h2>
 
                 {/* Description */}
                 <p className="hero-description">
-                    Discover smartphones, laptops, PCs and quality electronics
-                    selected to bring better technology into your everyday life.
+                    Discover smartphones, laptops, computers, accessories,
+                    and quality electronics at Hena Electronics. Explore our
+                    products and find a store near you in Addis Ababa.
                 </p>
 
                 {/* Buttons */}
                 <div className="hero-buttons">
 
-                    <a href="#products" className="primary-button">
+                    <a
+                        href="#products"
+                        className="primary-button"
+                    >
                         Explore Products
                         <span>→</span>
                     </a>
 
-                    <a href="#locations" className="secondary-button">
+                    <a
+                        href="#locations"
+                        className="secondary-button"
+                    >
                         Find Our Store
                         <span>↗</span>
                     </a>
@@ -74,25 +81,40 @@ function Hero() {
 
             {/* Floating decorative cards */}
             <div className="hero-floating-card hero-card-left">
-                <span className="hero-card-icon">📱</span>
+
+                <span className="hero-card-icon">
+                    📱
+                </span>
+
                 <div>
                     <strong>Smartphones</strong>
                     <small>Latest technology</small>
                 </div>
+
             </div>
 
             <div className="hero-floating-card hero-card-right">
-                <span className="hero-card-icon">💻</span>
+
+                <span className="hero-card-icon">
+                    💻
+                </span>
+
                 <div>
                     <strong>Technology</strong>
                     <small>Built for your needs</small>
                 </div>
+
             </div>
 
             {/* Scroll indicator */}
-            <a href="#categories" className="hero-scroll">
+            <a
+                href="#categories"
+                className="hero-scroll"
+            >
                 <span>Scroll to explore</span>
-                <span className="hero-scroll-arrow">↓</span>
+                <span className="hero-scroll-arrow">
+                    ↓
+                </span>
             </a>
 
         </section>
