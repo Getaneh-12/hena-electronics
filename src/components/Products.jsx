@@ -5,17 +5,11 @@ function Products({
     selectedCategory,
     setSelectedCategory,
 }) {
-
     const {
         products,
         loading,
         error,
     } = useProducts();
-
-
-    /* ========================================
-       FILTER PRODUCTS
-    ======================================== */
 
     const filteredProducts =
         selectedCategory === "All"
@@ -26,35 +20,26 @@ function Products({
                     selectedCategory
             );
 
-
-    /* ========================================
-       LOADING
-    ======================================== */
-
     if (loading) {
-
         return (
-
             <section
                 className="products"
                 id="products"
             >
-
                 <div className="section-heading">
-
-                    <p>
-                        OUR PRODUCTS
-                    </p>
+                    <p>OUR PRODUCTS</p>
 
                     <h2>
                         Explore Our Products
                     </h2>
 
+                    <span>
+                        Discover quality electronics
+                        from Hena Electronics in Addis Ababa.
+                    </span>
                 </div>
 
-
                 <div className="products-message">
-
                     <h3>
                         Loading products...
                     </h3>
@@ -63,44 +48,31 @@ function Products({
                         Please wait while we load our
                         latest products.
                     </p>
-
                 </div>
-
             </section>
-
         );
-
     }
 
-
-    /* ========================================
-       ERROR
-    ======================================== */
-
     if (error) {
-
         return (
-
             <section
                 className="products"
                 id="products"
             >
-
                 <div className="section-heading">
-
-                    <p>
-                        OUR PRODUCTS
-                    </p>
+                    <p>OUR PRODUCTS</p>
 
                     <h2>
                         Explore Our Products
                     </h2>
 
+                    <span>
+                        Discover quality electronics
+                        from Hena Electronics in Addis Ababa.
+                    </span>
                 </div>
 
-
                 <div className="products-message">
-
                     <h3>
                         Unable to load products
                     </h3>
@@ -109,53 +81,34 @@ function Products({
                         Please make sure the Hena Electronics
                         backend is running.
                     </p>
-
                 </div>
-
             </section>
-
         );
-
     }
 
-
     return (
-
         <section
             className="products"
             id="products"
         >
-
-
-            {/* ========================================
-                SECTION HEADER
-            ======================================== */}
-
             <div className="section-heading">
-
-                <p>
-                    OUR PRODUCTS
-                </p>
+                <p>OUR PRODUCTS</p>
 
                 <h2>
                     Explore Our Products
                 </h2>
 
                 <span>
-                    Discover quality electronics
-                    from Hena Electronics.
+                    Discover smartphones, laptops,
+                    computers, accessories, and quality
+                    electronics from Hena Electronics
+                    in Addis Ababa.
                 </span>
-
             </div>
 
-
-            {/* ========================================
-                CATEGORY FILTER
-            ======================================== */}
-
             <div className="product-filters">
-
                 <button
+                    type="button"
                     className={
                         selectedCategory === "All"
                             ? "active"
@@ -168,11 +121,10 @@ function Products({
                     All
                 </button>
 
-
                 <button
+                    type="button"
                     className={
-                        selectedCategory ===
-                            "Smartphones"
+                        selectedCategory === "Smartphones"
                             ? "active"
                             : ""
                     }
@@ -185,11 +137,10 @@ function Products({
                     Smartphones
                 </button>
 
-
                 <button
+                    type="button"
                     className={
-                        selectedCategory ===
-                            "Laptops"
+                        selectedCategory === "Laptops"
                             ? "active"
                             : ""
                     }
@@ -202,11 +153,10 @@ function Products({
                     Laptops
                 </button>
 
-
                 <button
+                    type="button"
                     className={
-                        selectedCategory ===
-                            "Accessories"
+                        selectedCategory === "Accessories"
                             ? "active"
                             : ""
                     }
@@ -218,18 +168,10 @@ function Products({
                 >
                     Accessories
                 </button>
-
             </div>
 
-
-            {/* ========================================
-                NO PRODUCTS
-            ======================================== */}
-
             {filteredProducts.length === 0 ? (
-
                 <div className="products-message">
-
                     <h3>
                         No products found
                     </h3>
@@ -238,48 +180,26 @@ function Products({
                         There are currently no products
                         in this category.
                     </p>
-
                 </div>
-
             ) : (
-
-
-                /* ========================================
-                   PRODUCT GRID
-                ======================================== */
-
                 <div className="products-grid">
-
                     {filteredProducts.map(
                         (product) => {
-
-
-                            /* ================================
-                               PRODUCT IMAGE
-                            ================================= */
-
                             const productImage =
                                 product.images &&
                                     product.images.length > 0
                                     ? product.images[0]
                                     : product.image;
 
-
-                            /* ================================
-                               DISCOUNTED PRICE
-                            ================================= */
-
                             const discount =
                                 Number(
                                     product.discount || 0
                                 );
 
-
                             const originalPrice =
                                 Number(
                                     product.price || 0
                                 );
-
 
                             const discountedPrice =
                                 discount > 0
@@ -291,36 +211,30 @@ function Products({
                                     100
                                     : originalPrice;
 
+                            const productImageAlt =
+                                product.brand &&
+                                    product.model
+                                    ? `${product.brand} ${product.model} - ${product.productName} | Hena Electronics`
+                                    : `${product.productName} | Hena Electronics`;
 
                             return (
-
                                 <article
                                     className="product-card"
                                     key={product.id}
                                 >
-
-
-                                    {/* ========================================
-                                        IMAGE
-                                    ======================================== */}
-
                                     <div className="product-image">
-
                                         {productImage ? (
-
                                             <img
                                                 src={
                                                     productImage
                                                 }
                                                 alt={
-                                                    product.productName
+                                                    productImageAlt
                                                 }
+                                                loading="lazy"
                                             />
-
                                         ) : (
-
                                             <div className="product-no-image">
-
                                                 <span>
                                                     📦
                                                 </span>
@@ -328,171 +242,122 @@ function Products({
                                                 <p>
                                                     No Image
                                                 </p>
-
                                             </div>
-
                                         )}
-
-
-                                        {/* PROMOTION BADGE */}
 
                                         {product.promotion ===
                                             "active" &&
                                             discount > 0 && (
-
-                                                <span className="product-promotion-badge">
-
+                                                <span
+                                                    className="product-promotion-badge"
+                                                    aria-label={`Discount ${discount}%`}
+                                                >
                                                     -
                                                     {discount}
                                                     %
-
                                                 </span>
-
                                             )}
-
                                     </div>
 
-
-                                    {/* ========================================
-                                        PRODUCT INFORMATION
-                                    ======================================== */}
-
                                     <div className="product-info">
-
-
                                         <span className="product-category">
-
-                                            {
-                                                product.category
-                                            }
-
+                                            {product.category}
                                         </span>
 
-
                                         <h3>
-
-                                            {
-                                                product.productName
-                                            }
-
+                                            <Link
+                                                to={`/product/${product.id}`}
+                                                className="product-title-link"
+                                            >
+                                                {
+                                                    product.productName
+                                                }
+                                            </Link>
                                         </h3>
 
-
                                         {product.brand && (
-
                                             <p className="product-brand">
-
+                                                Brand:{" "}
                                                 {
                                                     product.brand
                                                 }
-
                                             </p>
-
                                         )}
 
+                                        {(product.model ||
+                                            product.storage ||
+                                            product.ram) && (
+                                                <p className="product-details-summary">
+                                                    {product.model &&
+                                                        `Model: ${product.model}`}
 
-                                        {/* PRICE */}
+                                                    {product.storage &&
+                                                        ` • ${product.storage}`}
+
+                                                    {product.ram &&
+                                                        ` • ${product.ram}`}
+                                                </p>
+                                            )}
 
                                         <div className="product-price">
-
                                             {product.promotion ===
                                                 "active" &&
                                                 discount > 0 ? (
-
                                                 <>
-
-                                                    <span className="product-old-price">
-
-                                                        {originalPrice.toLocaleString()}
-                                                        {" "}
-                                                        ETB
-
-                                                    </span>
-
-
                                                     <strong>
-
                                                         {discountedPrice.toLocaleString()}
                                                         {" "}
                                                         ETB
-
                                                     </strong>
 
+                                                    <span className="product-old-price">
+                                                        {originalPrice.toLocaleString()}
+                                                        {" "}
+                                                        ETB
+                                                    </span>
                                                 </>
-
                                             ) : (
-
                                                 <strong>
-
                                                     {originalPrice.toLocaleString()}
                                                     {" "}
                                                     ETB
-
                                                 </strong>
-
                                             )}
-
                                         </div>
-
-
-                                        {/* AVAILABILITY */}
 
                                         <div className="product-availability">
-
                                             {product.availability ===
                                                 "available" ? (
-
                                                 <span className="available">
-
                                                     ● Available
-
                                                 </span>
-
                                             ) : (
-
                                                 <span className="out-of-stock">
-
                                                     ● Out of Stock
-
                                                 </span>
-
                                             )}
-
                                         </div>
-
-
-                                        {/* VIEW PRODUCT */}
 
                                         <Link
                                             to={`/product/${product.id}`}
                                             className="product-view-button"
+                                            aria-label={`View details for ${product.productName}`}
                                         >
-
                                             View Product
 
-                                            <span>
+                                            <span aria-hidden="true">
                                                 →
                                             </span>
-
                                         </Link>
-
                                     </div>
-
                                 </article>
-
                             );
-
                         }
                     )}
-
                 </div>
-
             )}
-
         </section>
-
     );
-
 }
 
 export default Products;

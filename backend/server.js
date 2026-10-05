@@ -54,6 +54,53 @@ app.get("/api/test-db", (req, res) => {
     );
 });
 
+app.get("/sitemap.xml", (req, res) => {
+    db.query(
+        "SELECT id FROM products ORDER BY id ASC",
+        (error, results) => {
+            if (error) {
+                console.error(
+                    "Sitemap database error:",
+                    error
+                );
+
+                return res.status(500).send(
+                    "Unable to generate sitemap"
+                );
+            }
+
+            const baseUrl =
+                "https://hena-electronics.onrender.com";
+
+            const productUrls =
+                results
+                    .map(
+                        (product) => `
+    <url>
+        <loc>${baseUrl}/product/${product.id}</loc>
+        <priority>0.8</priority>
+    </url>`
+                    )
+                    .join("");
+
+            const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+    <url>
+        <loc>${baseUrl}/</loc>
+        <priority>1.0</priority>
+    </url>
+
+${productUrls}
+
+</urlset>`;
+
+            res.type("application/xml");
+            res.send(sitemap);
+        }
+    );
+});
+
 app.use(
     "/api/auth",
     authRoutes

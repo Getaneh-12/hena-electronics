@@ -2,37 +2,32 @@ function Hero() {
     return (
         <section className="hero" id="home">
 
-            {/* Background decorative elements */}
             <div className="hero-glow hero-glow-one"></div>
             <div className="hero-glow hero-glow-two"></div>
 
             <div className="hero-content">
 
-                {/* Main business heading */}
                 <h1 className="hero-small-title">
-                    WELCOME TO HENA ELECTRONICS
+                    Hena Electronics
                 </h1>
 
-                {/* Small badge */}
                 <div className="hero-badge">
                     <span className="hero-badge-dot"></span>
                     Quality Technology • Trusted Service
                 </div>
 
-                {/* Main slogan */}
                 <h2>
                     Your Technology.
                     <span>Your Choice.</span>
                 </h2>
 
-                {/* Description */}
                 <p className="hero-description">
-                    Discover smartphones, laptops, computers, accessories,
-                    and quality electronics at Hena Electronics. Explore our
-                    products and find a store near you in Addis Ababa.
+                    Hena Electronics is an electronics store in Addis Ababa
+                    offering smartphones, laptops, computers, accessories,
+                    and quality technology products. Explore our products
+                    and find a store near you.
                 </p>
 
-                {/* Buttons */}
                 <div className="hero-buttons">
 
                     <a
@@ -53,7 +48,6 @@ function Hero() {
 
                 </div>
 
-                {/* Quick stats */}
                 <div className="hero-stats">
 
                     <div className="hero-stat">
@@ -79,7 +73,6 @@ function Hero() {
 
             </div>
 
-            {/* Floating decorative cards */}
             <div className="hero-floating-card hero-card-left">
 
                 <span className="hero-card-icon">
@@ -106,7 +99,6 @@ function Hero() {
 
             </div>
 
-            {/* Scroll indicator */}
             <a
                 href="#categories"
                 className="hero-scroll"

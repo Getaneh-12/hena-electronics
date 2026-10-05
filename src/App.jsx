@@ -1,4 +1,9 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { useEffect } from "react";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+} from "react-router-dom";
 
 import Home from "./pages/Home";
 import ProductDetails from "./pages/ProductDetails";
@@ -18,10 +23,99 @@ import { ProductProvider } from "./context/ProductContext";
 import "./App.css";
 
 function App() {
+
+  useEffect(() => {
+    const schemaId =
+      "hena-local-business-schema";
+
+    const existingSchema =
+      document.getElementById(
+        schemaId
+      );
+
+    if (existingSchema) {
+      existingSchema.remove();
+    }
+
+    const localBusinessSchema = {
+      "@context": "https://schema.org",
+
+      "@type": "ElectronicsStore",
+
+      "@id":
+        "https://hena-electronics.onrender.com/#business",
+
+      name: "Hena Electronics",
+
+      url:
+        "https://hena-electronics.onrender.com/",
+
+      logo:
+        "https://hena-electronics.onrender.com/hena-logo.png",
+
+      image:
+        "https://hena-electronics.onrender.com/hena-logo.png",
+
+      description:
+        "Hena Electronics is an electronics store in Addis Ababa offering smartphones, laptops, computers, accessories, and quality technology products.",
+
+      telephone:
+        "+251990239030",
+
+      priceRange: "ETB",
+
+      address: {
+        "@type": "PostalAddress",
+        addressLocality: "Addis Ababa",
+        addressCountry: "ET",
+      },
+
+      areaServed: {
+        "@type": "City",
+        name: "Addis Ababa",
+      },
+
+      sameAs: [
+        "https://t.me/PCandphone4u",
+      ],
+    };
+
+    const schemaScript =
+      document.createElement(
+        "script"
+      );
+
+    schemaScript.id = schemaId;
+
+    schemaScript.type =
+      "application/ld+json";
+
+    schemaScript.textContent =
+      JSON.stringify(
+        localBusinessSchema
+      );
+
+    document.head.appendChild(
+      schemaScript
+    );
+
+    return () => {
+      const schema =
+        document.getElementById(
+          schemaId
+        );
+
+      if (schema) {
+        schema.remove();
+      }
+    };
+  }, []);
+
   return (
     <AdminAuthProvider>
       <ProductProvider>
         <BrowserRouter>
+
           <Routes>
 
             <Route
@@ -31,12 +125,16 @@ function App() {
 
             <Route
               path="/product/:id"
-              element={<ProductDetails />}
+              element={
+                <ProductDetails />
+              }
             />
 
             <Route
               path="/admin/login"
-              element={<AdminLogin />}
+              element={
+                <AdminLogin />
+              }
             />
 
             <Route
@@ -85,6 +183,7 @@ function App() {
             />
 
           </Routes>
+
         </BrowserRouter>
       </ProductProvider>
     </AdminAuthProvider>
