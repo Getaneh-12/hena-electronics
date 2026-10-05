@@ -155,6 +155,141 @@ function AddProduct() {
         );
     };
 
+    const compressImage = (file) => {
+        return new Promise(
+            (resolve, reject) => {
+                const image =
+                    new Image();
+
+                const objectUrl =
+                    URL.createObjectURL(
+                        file
+                    );
+
+                image.onload = () => {
+                    URL.revokeObjectURL(
+                        objectUrl
+                    );
+
+                    const maxWidth = 1600;
+                    const maxHeight = 1600;
+
+                    let width =
+                        image.width;
+
+                    let height =
+                        image.height;
+
+                    if (
+                        width >
+                        maxWidth ||
+                        height >
+                        maxHeight
+                    ) {
+                        const widthRatio =
+                            maxWidth /
+                            width;
+
+                        const heightRatio =
+                            maxHeight /
+                            height;
+
+                        const ratio =
+                            Math.min(
+                                widthRatio,
+                                heightRatio
+                            );
+
+                        width =
+                            Math.round(
+                                width *
+                                ratio
+                            );
+
+                        height =
+                            Math.round(
+                                height *
+                                ratio
+                            );
+                    }
+
+                    const canvas =
+                        document.createElement(
+                            "canvas"
+                        );
+
+                    canvas.width =
+                        width;
+
+                    canvas.height =
+                        height;
+
+                    const context =
+                        canvas.getContext(
+                            "2d"
+                        );
+
+                    context.drawImage(
+                        image,
+                        0,
+                        0,
+                        width,
+                        height
+                    );
+
+                    canvas.toBlob(
+                        (blob) => {
+                            if (!blob) {
+                                reject(
+                                    new Error(
+                                        "Failed to compress image."
+                                    )
+                                );
+
+                                return;
+                            }
+
+                            const compressedFile =
+                                new File(
+                                    [blob],
+                                    file.name.replace(
+                                        /\.[^/.]+$/,
+                                        ".jpg"
+                                    ),
+                                    {
+                                        type: "image/jpeg",
+                                        lastModified:
+                                            Date.now(),
+                                    }
+                                );
+
+                            resolve(
+                                compressedFile
+                            );
+                        },
+                        "image/jpeg",
+                        0.82
+                    );
+                };
+
+                image.onerror = () => {
+                    URL.revokeObjectURL(
+                        objectUrl
+                    );
+
+                    reject(
+                        new Error(
+                            "Failed to process image."
+                        )
+                    );
+                };
+
+                image.src =
+                    objectUrl;
+            }
+        );
+    };
+
     const handleSubmit = async (event) => {
         event.preventDefault();
 
@@ -260,6 +395,11 @@ function AddProduct() {
         });
 
         try {
+            setMessage({
+                type: "success",
+                text: "Creating product...",
+            });
+
             const productResponse =
                 await fetch(API_URL, {
                     method: "POST",
@@ -344,14 +484,34 @@ function AddProduct() {
             if (
                 imagePreviews.length > 0
             ) {
+                setMessage({
+                    type: "success",
+                    text: "Compressing images...",
+                });
+
+                const compressedImages =
+                    await Promise.all(
+                        imagePreviews.map(
+                            (preview) =>
+                                compressImage(
+                                    preview.file
+                                )
+                        )
+                    );
+
+                setMessage({
+                    type: "success",
+                    text: "Uploading images...",
+                });
+
                 const imageFormData =
                     new FormData();
 
-                imagePreviews.forEach(
-                    (preview) => {
+                compressedImages.forEach(
+                    (file) => {
                         imageFormData.append(
                             "images",
-                            preview.file
+                            file
                         );
                     }
                 );
@@ -492,7 +652,7 @@ function AddProduct() {
                         <strong>
                             {message.type ===
                                 "success"
-                                ? "Product Added"
+                                ? "Product"
                                 : "Unable to Add Product"}
                         </strong>
 

@@ -397,8 +397,7 @@ const uploadProductImages = (
     req,
     res
 ) => {
-    const { id } =
-        req.params;
+    const { id } = req.params;
 
     if (
         !req.files ||
@@ -450,66 +449,65 @@ const uploadProductImages = (
             }
 
             try {
-                const uploadedImages =
-                    [];
+                const uploadImage = (
+                    file
+                ) => {
+                    return new Promise(
+                        (
+                            resolve,
+                            reject
+                        ) => {
+                            const uploadStream =
+                                cloudinary.uploader.upload_stream(
+                                    {
+                                        folder:
+                                            "hena-products",
 
-                for (
-                    const file of req.files
-                ) {
-                    const result =
-                        await new Promise(
-                            (
-                                resolve,
-                                reject
-                            ) => {
-                                const uploadStream =
-                                    cloudinary.uploader.upload_stream(
-                                        {
-                                            folder:
-                                                "hena-products",
-
-                                            resource_type:
-                                                "image",
-                                        },
-
-                                        (
-                                            error,
-                                            result
-                                        ) => {
-                                            if (
+                                        resource_type:
+                                            "image",
+                                    },
+                                    (
+                                        error,
+                                        result
+                                    ) => {
+                                        if (error) {
+                                            reject(
                                                 error
-                                            ) {
-                                                reject(
-                                                    error
-                                                );
-                                            } else {
-                                                resolve(
-                                                    result
-                                                );
-                                            }
+                                            );
+                                        } else {
+                                            resolve(
+                                                {
+                                                    url:
+                                                        result.secure_url,
+
+                                                    publicId:
+                                                        result.public_id,
+                                                }
+                                            );
                                         }
-                                    );
-
-                                uploadStream.end(
-                                    file.buffer
+                                    }
                                 );
-                            }
-                        );
 
-                    uploadedImages.push({
-                        url:
-                            result.secure_url,
+                            uploadStream.end(
+                                file.buffer
+                            );
+                        }
+                    );
+                };
 
-                        publicId:
-                            result.public_id,
-                    });
-                }
+                const uploadedImages =
+                    await Promise.all(
+                        req.files.map(
+                            (file) =>
+                                uploadImage(
+                                    file
+                                )
+                        )
+                    );
 
                 const imageValues =
                     uploadedImages.map(
-                        (
-                            image
-                        ) => [
+                        (image) => [
                             id,
                             image.url,
                         ]
@@ -530,9 +528,7 @@ const uploadProductImages = (
                     (
                         imageError
                     ) => {
-                        if (
-                            imageError
-                        ) {
+                        if (imageError) {
                             console.error(
                                 "Save Cloudinary image URLs error:",
                                 imageError

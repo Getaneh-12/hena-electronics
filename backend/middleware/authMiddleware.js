@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 
-const JWT_SECRET = "hena_electronics_secret_key";
+const JWT_SECRET =  process.env.JWT_SECRET;
 
 const authenticateAdmin = (req, res, next) => {
     const authHeader = req.headers.authorization;
